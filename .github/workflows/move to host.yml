@@ -24,3 +24,8 @@ jobs:
             **/node_modules/**
             vendor/**
             server.php
+            app/**
+            config/**
+            inertia/**
+            resources/**
+            database/**
