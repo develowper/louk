@@ -42,7 +42,7 @@ export default class SocketioService {
       socket.on('createWebRtcTransport', async (callback) => {
         try {
           const transport = await createWebRtcTransport()
-
+          console.log('transport', transport)
           callback({
             id: transport.id,
             iceParameters: transport.iceParameters,
@@ -53,13 +53,14 @@ export default class SocketioService {
           // Handle DTLS Connect
           socket.on('connectTransport', async ({ dtlsParameters }) => {
             await transport.connect({ dtlsParameters })
+            console.log('connectTransport')
           })
 
           // Handle producer creation
           socket.on('produce', async ({ kind, rtpParameters }, callback) => {
-            console.log(`producer ${socket.id} start stream`, producer)
             const transport = peers.get(socket.id).transport
             const producer = await transport.produce({ kind, rtpParameters })
+            console.log(`producer ${socket.id} start stream`, producer)
 
             // Save it
             peers.get(socket.id).producers.push(producer)
