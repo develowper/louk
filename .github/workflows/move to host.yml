@@ -27,5 +27,3 @@ jobs:
             app/**
             config/**
             inertia/**
-            resources/**
-            database/**
