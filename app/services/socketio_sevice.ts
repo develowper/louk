@@ -56,56 +56,57 @@ export default class SocketioService {
           })
 
           // Handle producer creation
+          socket.on('produce', async ({ kind, rtpParameters }, callback) => {
+            console.log(`producer ${socket.id} start stream`, producer)
+            const transport = peers.get(socket.id).transport
+            const producer = await transport.produce({ kind, rtpParameters })
+
+            // Save it
+            peers.get(socket.id).producers.push(producer)
+            // Notify others
+            socket.broadcast.emit('new-producer', {
+              socketId: socket.id,
+              producerId: producer.id,
+              kind,
+            })
+            callback({ id: producer.id })
+          })
+
+          // Handle consumer creation
+          socket.on('consume', async ({ producerId, rtpCapabilities }, callback) => {
+            function findProducerById(producerId) {
+              for (const [socketId, peer] of peers.entries()) {
+                const producer = peer.producers.find((p) => p.id === producerId)
+                if (producer) return producer
+              }
+              return null
+            }
+
+            const producer = findProducerById(producerId) // search in peers
+            if (!producer) {
+              return callback({ error: 'Producer not found' })
+            }
+            const transport = peers.get(socket.id)?.transports[0]
+            const consumer = await transport.consume({
+              producerId: producer?.id,
+              rtpCapabilities,
+              paused: false,
+            })
+            // Save consumer
+            peers.get(socket.id).consumers.push(consumer)
+
+            callback({
+              id: consumer.id,
+              kind: consumer.kind,
+              rtpParameters: consumer.rtpParameters,
+            })
+          })
         } catch (err) {
           console.error('❌ Error creating WebRTC Transport:', err)
           callback({ error: err.message })
         }
       })
-      socket.on('produce', async ({ kind, rtpParameters }, callback) => {
-        const transport = peers.get(socket.id).transport
-        const producer = await transport.produce({ kind, rtpParameters })
 
-        console.log(`producer ${socket.id} start stream`, producer)
-        // Save it
-        peers.get(socket.id).producers.push(producer)
-        // Notify others
-        socket.broadcast.emit('new-producer', {
-          socketId: socket.id,
-          producerId: producer.id,
-          kind,
-        })
-        callback({ id: producer.id })
-      })
-
-      // Handle consumer creation
-      socket.on('consume', async ({ producerId, rtpCapabilities }, callback) => {
-        function findProducerById(producerId) {
-          for (const [socketId, peer] of peers.entries()) {
-            const producer = peer.producers.find((p) => p.id === producerId)
-            if (producer) return producer
-          }
-          return null
-        }
-        console.log(`consume ${socket.id} `)
-        const producer = findProducerById(producerId) // search in peers
-        if (!producer) {
-          return callback({ error: 'Producer not found' })
-        }
-        const transport = peers.get(socket.id)?.transports[0]
-        const consumer = await transport.consume({
-          producerId: producer?.id,
-          rtpCapabilities,
-          paused: false,
-        })
-        // Save consumer
-        peers.get(socket.id).consumers.push(consumer)
-
-        callback({
-          id: consumer.id,
-          kind: consumer.kind,
-          rtpParameters: consumer.rtpParameters,
-        })
-      })
       //***********end mediasoup
 
       socket.on('JoinRoom', (data) => {
