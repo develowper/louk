@@ -22,8 +22,3 @@ jobs:
             **/.git*/**
             **/node_modules/**
             .editorconfig
-            vendor/**
-            server.php
-            app/**
-            config/**
-            inertia/**
