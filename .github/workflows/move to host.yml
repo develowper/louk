@@ -1,0 +1,26 @@
+on: push
+name: louk app changes
+jobs:
+  web-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest code
+        uses: actions/checkout@v3
+
+      - name: Sync files
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: 195.214.235.75
+          protocol: ftp
+          port: 21
+          username: admin_admin
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /louk/
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            vendor/**
+            server.php
