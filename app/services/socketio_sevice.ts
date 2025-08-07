@@ -62,7 +62,7 @@ export default class SocketioService {
 
             // Save it
             peers.get(socket.id).producers.push(producer)
-            console.info('producer', producer)
+            console.info(`producer ${socket.id} start stream`, producer)
             // Notify others
             socket.broadcast.emit('new-producer', {
               socketId: socket.id,
