@@ -20,7 +20,7 @@ yarn-error.log
 .fleet
 .idea
 .vscode
-
+.editorconfig
 # Platform specific
 .DS_Store
-.editorconfig
+

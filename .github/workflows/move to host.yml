@@ -22,6 +22,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            .editorconfig
             vendor/**
             server.php
             app/**
