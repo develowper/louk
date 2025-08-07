@@ -16,7 +16,7 @@ jobs:
           port: 21
           username: admin_admin
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /louk/
+          server-dir: /
           dangerous-clean-slate: false
           exclude: |
             **/.git*
