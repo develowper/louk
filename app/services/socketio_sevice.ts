@@ -2,8 +2,10 @@ import { Server } from 'socket.io'
 import server from '@adonisjs/core/services/server'
 import {
   createWebRtcTransport,
+  filterSupportedCodecs,
   getRouterRtpCapabilities,
   initMediasoup,
+  mediaCodecs,
 } from '#services/mediasoup_service'
 
 export default class SocketioService {
@@ -76,20 +78,9 @@ export default class SocketioService {
             if (!transport) {
               return callback({ error: 'Transport not found' })
             }
-            function filterUnsupportedCodecs(rtpParameters) {
-              const unsupportedCodecs = ['audio/red', 'audio/g722'] // add any other unsupported here
-              const filteredCodecs = rtpParameters.codecs.filter((codec) => {
-                return !unsupportedCodecs.includes(codec.mimeType.toLowerCase())
-              })
-
-              return {
-                ...rtpParameters,
-                codecs: filteredCodecs,
-              }
-            }
 
             // Before calling produce:
-            rtpParameters = filterUnsupportedCodecs(rtpParameters)
+            rtpParameters = filterSupportedCodecs(rtpParameters)
 
             const producer = await transport.produce({ kind, rtpParameters })
             console.log(`producer ${socket.id} start stream`, producer)
@@ -150,7 +141,7 @@ export default class SocketioService {
           .to(`stream-${data.roomId}`)
           .emit('UserJoined', `user ${socket.id} joined in stream-${data.roomId}`)
       })
-      socket.on('Disconnect', () => {
+      socket.on('Disconnect', (data) => {
         console.log(`    ------ Disconnected from stream-${socket.id}`)
         SocketioService.wsio
           .to(`stream-${data.roomId}`)

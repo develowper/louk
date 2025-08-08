@@ -4,7 +4,6 @@ import {
   workerBin,
   observer,
   createWorker,
-  createRouter,
   setLogEventListeners,
   getSupportedRtpCapabilities,
   parseScalabilityMode,
@@ -12,9 +11,33 @@ import {
 
 let worker: msTypes.Worker
 let router: msTypes.Router
-let rtpParameters: msTypes.RtpParameters
 
 let transports: any[] = []
+export const mediaCodecs: any = [
+  {
+    kind: 'audio',
+    mimeType: 'audio/opus',
+    clockRate: 48000,
+    channels: 2,
+  },
+  {
+    kind: 'video',
+    mimeType: 'video/VP8',
+    clockRate: 90000,
+    parameters: {},
+  },
+  {
+    kind: 'video',
+    mimeType: 'video/H264',
+    // mimeType: 'video/VP8',
+    clockRate: 90000,
+    parameters: {
+      'packetization-mode': 1,
+      'profile-level-id': '42e01f',
+      'level-asymmetry-allowed': 1,
+    },
+  },
+]
 export async function initMediasoup() {
   worker = await createWorker({
     rtcMinPort: 40000,
@@ -22,25 +45,7 @@ export async function initMediasoup() {
   })
 
   router = await worker.createRouter({
-    mediaCodecs: [
-      {
-        kind: 'audio',
-        mimeType: 'audio/opus',
-        clockRate: 48000,
-        channels: 2,
-      },
-      {
-        kind: 'video',
-        mimeType: 'video/H264',
-        // mimeType: 'video/VP8',
-        clockRate: 90000,
-        parameters: {
-          'packetization-mode': 1,
-          'profile-level-id': '42e01f',
-          'level-asymmetry-allowed': 1,
-        },
-      },
-    ],
+    mediaCodecs: mediaCodecs,
   })
   observer.on('newworker', (worker) => {
     console.log('new worker created [pid:%d]', worker.pid)
@@ -93,3 +98,14 @@ export async function createWebRtcServer() {
   })
 }
 export { worker, router }
+export function filterSupportedCodecs(rtpParameters: msTypes.RtpParameters) {
+  const supportedCodecs = mediaCodecs.map((i) => i.mimeType) // add any other unsupported here
+  const filteredCodecs = rtpParameters.codecs.filter((codec: any) => {
+    return supportedCodecs.includes(codec.mimeType.toLowerCase())
+  })
+
+  return {
+    ...rtpParameters,
+    codecs: filteredCodecs,
+  }
+}
