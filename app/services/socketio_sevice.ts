@@ -57,9 +57,10 @@ export default class SocketioService {
           })
 
           // Handle DTLS Connect
-          socket.on('connectTransport', async ({ dtlsParameters }) => {
+          socket.on('connectTransport', async ({ dtlsParameters }, callback) => {
             await transport.connect({ dtlsParameters })
             console.log('connectTransport')
+            callback({ status: 'success' })
           })
 
           // Handle producer creation
