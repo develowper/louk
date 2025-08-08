@@ -120,6 +120,7 @@ export default class SocketioService {
 
           // Handle consumer creation
           socket.on('consume', async ({ producerId, rtpCapabilities }, callback) => {
+            // Find producer by id in all peers
             function findProducerById(producerId) {
               for (const [socketId, peer] of peers.entries()) {
                 const producer = peer.producers.find((p) => p.id === producerId)
@@ -128,24 +129,42 @@ export default class SocketioService {
               return null
             }
 
-            const producer = findProducerById(producerId) // search in peers
+            const producer = findProducerById(producerId)
             if (!producer) {
               return callback({ error: 'Producer not found' })
             }
-            const transport = peers.get(socket.id)?.transports[0]
-            const consumer = await transport.consume({
-              producerId: producer?.id,
-              rtpCapabilities,
-              paused: false,
-            })
-            // Save consumer
-            peers.get(socket.id).consumers.push(consumer)
 
-            callback({
-              id: consumer.id,
-              kind: consumer.kind,
-              rtpParameters: consumer.rtpParameters,
-            })
+            const peer = peers.get(socket.id)
+            if (!peer) {
+              return callback({ error: 'Peer not found' })
+            }
+
+            // If you have multiple transports per peer, pick the right one by kind
+            // Example assumes transport.appData.kind is set to 'audio' or 'video' during creation
+            let transport = peer.transports[0]
+            if (peer.transports.length > 1) {
+              transport =
+                peer.transports.find((t) => t.appData?.kind === producer.kind) || peer.transports[0]
+            }
+
+            try {
+              const consumer = await transport.consume({
+                producerId: producer.id,
+                rtpCapabilities,
+                paused: false,
+              })
+
+              peer.consumers.push(consumer)
+
+              callback({
+                id: consumer.id,
+                kind: consumer.kind,
+                rtpParameters: consumer.rtpParameters,
+              })
+            } catch (error) {
+              console.error('Error consuming:', error)
+              callback({ error: error.message })
+            }
           })
         } catch (err) {
           console.error('❌ Error creating WebRTC Transport:', err)
