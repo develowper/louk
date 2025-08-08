@@ -184,6 +184,47 @@ export default class SocketioService {
           }
         });
 
+        socket.on('stopProduce', async () => {
+          const peer = setPeer(socket.id, 'init'); // get peer
+
+          if (!peer) {
+            console.warn(`Peer ${socket.id} not found on stopProduce`);
+            return;
+          }
+
+          // Close and remove video producer if exists
+          if (peer.videoProducer) {
+            try {
+              await peer.videoProducer.close();
+              peer.videoProducer = null;
+              console.log(`Video producer stopped for peer ${socket.id}`);
+            } catch (err) {
+              console.error(`Error closing video producer for ${socket.id}:`, err);
+            }
+          }
+
+          // Close and remove audio producer if exists
+          if (peer.audioProducer) {
+            try {
+              await peer.audioProducer.close();
+              peer.audioProducer = null;
+              console.log(`Audio producer stopped for peer ${socket.id}`);
+            } catch (err) {
+              console.error(`Error closing audio producer for ${socket.id}:`, err);
+            }
+          }
+
+          // Optionally notify other clients that this streamer stopped producing
+          socket.broadcast.emit('streamer-removed', { id: socket.id });
+
+          // Optionally update peer state or remove if needed
+          setPeer(socket.id, 'remove');
+
+          console.log(`Peer ${socket.id} stopped producing`);
+        });
+
+
+
         //***********end mediasoup
 
       socket.on('JoinRoom', (data) => {
