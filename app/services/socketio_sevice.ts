@@ -53,13 +53,21 @@ export default class SocketioService {
       // Handle DTLS Connect
       socket.on('connectTransport', async ({transportId, dtlsParameters }, callback) => {
 
-     const peer=   setPeer(socket.id,'init' )
+     const peer= setPeer(socket.id,'init' )
         const transport =peer?.sendTransport?.id==transportId? peer?.sendTransport :peer?.receiveTransport?.id==transportId? peer?.receiveTransport :null
         if(!transport)
           return callback({status:'error', message: 'Peer not found' });
-        await transport.connect({ dtlsParameters })
-        console.log('connectTransport')
-        callback({ status: 'success' })
+
+        try {
+          await transport.connect({ dtlsParameters })
+            callback({ status: 'success' })
+          console.log('connectTransport')
+
+        } catch (err) {
+            callback({ status: 'error', message: err.message })
+          console.error('connectTransport error',err.message)
+
+        }
       })
 
       // Handle producer creation
