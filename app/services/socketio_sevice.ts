@@ -77,13 +77,14 @@ export default class SocketioService {
               return callback({ error: 'Transport not found' })
             }
             function filterUnsupportedCodecs(rtpParameters) {
-              const supportedCodecs = rtpParameters.codecs.filter((codec) => {
-                return codec.mimeType.toLowerCase() !== 'audio/red'
+              const unsupportedCodecs = ['audio/red', 'audio/g722'] // add any other unsupported here
+              const filteredCodecs = rtpParameters.codecs.filter((codec) => {
+                return !unsupportedCodecs.includes(codec.mimeType.toLowerCase())
               })
 
               return {
                 ...rtpParameters,
-                codecs: supportedCodecs,
+                codecs: filteredCodecs,
               }
             }
 
