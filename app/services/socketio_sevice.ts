@@ -76,6 +76,20 @@ export default class SocketioService {
             if (!transport) {
               return callback({ error: 'Transport not found' })
             }
+            function filterUnsupportedCodecs(rtpParameters) {
+              const supportedCodecs = rtpParameters.codecs.filter((codec) => {
+                return codec.mimeType.toLowerCase() !== 'audio/red'
+              })
+
+              return {
+                ...rtpParameters,
+                codecs: supportedCodecs,
+              }
+            }
+
+            // Before calling produce:
+            rtpParameters = filterUnsupportedCodecs(rtpParameters)
+
             const producer = await transport.produce({ kind, rtpParameters })
             console.log(`producer ${socket.id} start stream`, producer)
 
