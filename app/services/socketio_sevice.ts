@@ -43,6 +43,12 @@ export default class SocketioService {
         try {
           const transport = await createWebRtcTransport()
           console.log('transport', transport)
+          // Store transport in peers map
+          if (!peers.has(socket.id)) {
+            peers.set(socket.id, { transports: [], producers: [], consumers: [] })
+          }
+          peers.get(socket.id).transports.push(transport)
+
           callback({
             id: transport.id,
             iceParameters: transport.iceParameters,
