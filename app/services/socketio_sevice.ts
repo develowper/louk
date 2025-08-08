@@ -80,20 +80,42 @@ export default class SocketioService {
             }
 
             // Before calling produce:
-            rtpParameters = filterSupportedCodecs(rtpParameters)
+            const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
+            const videoProducer = await transport.produce({
+              kind: 'video',
+              rtpParameters: videoParams,
+            })
+            const audioProducer = await transport.produce({
+              kind: 'audio',
+              rtpParameters: audioParams,
+            })
+            // const producer = await transport.produce({ kind, rtpParameters })
+            console.log(`======video producer ${socket.id} start stream`, videoProducer)
+            console.log(`======audio producer ${socket.id} start stream`, audioProducer)
 
-            const producer = await transport.produce({ kind, rtpParameters })
-            console.log(`producer ${socket.id} start stream`, producer)
+            // Save both producers in the peer
+            const peer = peers.get(socket.id)
+            if (!peer.producers) peer.producers = []
+            peer.producers.push(videoProducer)
+            peer.producers.push(audioProducer)
 
-            // Save it
-            peers.get(socket.id).producers.push(producer)
-            // Notify others
+            // Notify others about each producer separately
             socket.broadcast.emit('new-producer', {
               socketId: socket.id,
-              producerId: producer.id,
-              kind,
+              producerId: videoProducer.id,
+              kind: 'video',
             })
-            callback({ id: producer.id })
+
+            socket.broadcast.emit('new-producer', {
+              socketId: socket.id,
+              producerId: audioProducer.id,
+              kind: 'audio',
+            })
+
+            callback({
+              audioProducerId: audioProducer.id,
+              videoProducerId: videoProducer.id,
+            })
           })
 
           // Handle consumer creation

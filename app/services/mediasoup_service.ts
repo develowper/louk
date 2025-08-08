@@ -99,13 +99,34 @@ export async function createWebRtcServer() {
 }
 export { worker, router }
 export function filterSupportedCodecs(rtpParameters: msTypes.RtpParameters) {
-  const supportedCodecs = mediaCodecs.map((i) => i.mimeType) // add any other unsupported here
-  const filteredCodecs = rtpParameters.codecs.filter((codec: any) => {
-    return supportedCodecs.includes(codec.mimeType.toLowerCase())
-  })
+  const supportedCodecs = mediaCodecs.map((i) => i.mimeType.toLowerCase()) // add any other unsupported here
 
-  return {
+  const videoCodecs = rtpParameters.codecs.filter(
+    (codec) =>
+      supportedCodecs.includes(codec.mimeType.toLowerCase()) &&
+      codec.mimeType.toLowerCase().startsWith('video/')
+  )
+
+  const audioCodecs = rtpParameters.codecs.filter(
+    (codec) =>
+      supportedCodecs.includes(codec.mimeType.toLowerCase()) &&
+      codec.mimeType.toLowerCase().startsWith('audio/')
+  )
+  // For video encodings, keep those if videoCodecs exist
+  const videoEncodings = videoCodecs.length > 0 ? rtpParameters.encodings : []
+
+  // For audio encodings, keep those if audioCodecs exist
+  const audioEncodings = audioCodecs.length > 0 ? rtpParameters.encodings : []
+
+  const videoParams = {
     ...rtpParameters,
-    codecs: filteredCodecs,
+    codecs: videoCodecs,
+    encodings: videoEncodings,
   }
+  const audioParams = {
+    ...rtpParameters,
+    codecs: audioCodecs,
+    encodings: audioEncodings,
+  }
+  return { videoParams, audioParams }
 }
