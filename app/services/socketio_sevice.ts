@@ -6,6 +6,7 @@ import {
   getRouterRtpCapabilities,
   initMediasoup,
   mediaCodecs,
+  setPeer,
 } from '#services/mediasoup_service'
 
 export default class SocketioService {
@@ -16,24 +17,18 @@ export default class SocketioService {
 
     await initMediasoup()
 
-    const peers = new Map()
-
+    const streamers = []
     SocketioService.wsio.on('connection', (socket) => {
       console.log(`    ------        Connection connected: ${socket.id}`)
+
+      setPeer(socket.id, 'init')
       //***********mediasoup
-      peers.set(socket.id, {
-        transports: [],
-        producers: [],
-        consumers: [],
-      })
+
       socket.on('disconnect', () => {
-        // Clean up
-        const peer = peers.get(socket.id)
-        if (peer) {
-          peer.producers.forEach((p) => p.close())
-          peer.transports.forEach((t) => t.close())
-        }
-        peers.delete(socket.id)
+        setPeer(socket.id, 'remove')
+        // Broadcast updated streamer list
+        socket.broadcast.emit('streamer-removed', { id: socket.id })
+
       })
       // Step 1: Send Router RTP Capabilities
       socket.on('getRouterRtpCapabilities', (_, callback) => {
@@ -41,138 +36,147 @@ export default class SocketioService {
         callback(rtpCapabilities)
       })
       // Step 2: Create WebRTC Transport
-      socket.on('createWebRtcTransport', async (callback) => {
+      socket.on('createWebRtcTransport', async ({ direction }, callback) => {
         try {
           const transport = await createWebRtcTransport()
           console.log('transport', transport)
           // Store transport in peers map
-          if (!peers.has(socket.id)) {
-            peers.set(socket.id, { transports: [], producers: [], consumers: [] })
-          }
-          peers.get(socket.id).transports.push(transport)
-
+        setPeer(socket.id,`${direction}-transport`,transport)
           callback({
+            status: 'success',
             id: transport.id,
             iceParameters: transport.iceParameters,
             iceCandidates: transport.iceCandidates,
             dtlsParameters: transport.dtlsParameters,
           })
+      })
+      // Handle DTLS Connect
+      socket.on('connectTransport', async ({transportId, dtlsParameters }, callback) => {
 
-          // Handle DTLS Connect
-          socket.on('connectTransport', async ({ dtlsParameters }, callback) => {
-            await transport.connect({ dtlsParameters })
-            console.log('connectTransport')
-            callback({ status: 'success' })
-          })
-
-          // Handle producer creation
-          socket.on('produce', async ({ kind, rtpParameters, sdp, type }, callback) => {
-            console.log('produce', kind, rtpParameters, sdp, type)
-            const peer = peers.get(socket.id)
-            if (!peer) {
-              return callback({ error: 'Peer not found' })
-            }
-
-            // Usually you use the first transport created by this peer for producing:
-            const transport = peer.transports[0]
-            if (!transport) {
-              return callback({ error: 'Transport not found' })
-            }
-
-            // Before calling produce:
-            const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
-            const videoProducer = await transport.produce({
-              kind: 'video',
-              rtpParameters: videoParams,
-            })
-            const audioProducer = await transport.produce({
-              kind: 'audio',
-              rtpParameters: audioParams,
-            })
-            // const producer = await transport.produce({ kind, rtpParameters })
-            console.log(`======video producer ${socket.id} start stream`, videoProducer)
-            console.log(`======audio producer ${socket.id} start stream`, audioProducer)
-
-            // Save both producers in the peer
-            const peer = peers.get(socket.id)
-            if (!peer.producers) peer.producers = []
-            peer.producers.push(videoProducer)
-            peer.producers.push(audioProducer)
-
-            // Notify others about each producer separately
-            socket.broadcast.emit('new-producer', {
-              socketId: socket.id,
-              producerId: videoProducer.id,
-              kind: 'video',
-            })
-
-            socket.broadcast.emit('new-producer', {
-              socketId: socket.id,
-              producerId: audioProducer.id,
-              kind: 'audio',
-            })
-
-            callback({
-              audioProducerId: audioProducer.id,
-              videoProducerId: videoProducer.id,
-            })
-          })
-
-          // Handle consumer creation
-          socket.on('consume', async ({ producerId, rtpCapabilities }, callback) => {
-            // Find producer by id in all peers
-            function findProducerById(producerId) {
-              for (const [socketId, peer] of peers.entries()) {
-                const producer = peer.producers.find((p) => p.id === producerId)
-                if (producer) return producer
-              }
-              return null
-            }
-
-            const producer = findProducerById(producerId)
-            if (!producer) {
-              return callback({ error: 'Producer not found' })
-            }
-
-            const peer = peers.get(socket.id)
-            if (!peer) {
-              return callback({ error: 'Peer not found' })
-            }
-
-            // If you have multiple transports per peer, pick the right one by kind
-            // Example assumes transport.appData.kind is set to 'audio' or 'video' during creation
-            let transport = peer.transports[0]
-            if (peer.transports.length > 1) {
-              transport =
-                peer.transports.find((t) => t.appData?.kind === producer.kind) || peer.transports[0]
-            }
-
-            try {
-              const consumer = await transport.consume({
-                producerId: producer.id,
-                rtpCapabilities,
-                paused: false,
-              })
-
-              peer.consumers.push(consumer)
-
-              callback({
-                id: consumer.id,
-                kind: consumer.kind,
-                rtpParameters: consumer.rtpParameters,
-              })
-            } catch (error) {
-              console.error('Error consuming:', error)
-              callback({ error: error.message })
-            }
-          })
-        } catch (err) {
-          console.error('❌ Error creating WebRTC Transport:', err)
-          callback({ error: err.message })
-        }
+     const peer=   setPeer(socket.id,'init' )
+        const transport =peer?.sendTransport?.id==transportId? peer?.sendTransport :peer?.receiveTransport?.id==transportId? peer?.receiveTransport :null
+        if(!transport)
+          return callback({status:'error', message: 'Peer not found' });
+        await transport.connect({ dtlsParameters })
+        console.log('connectTransport')
+        callback({ status: 'success' })
       })
 
-      //***********end mediasoup
+      // Handle producer creation
+      socket.on('produce', async ({ kind, rtpParameters, sdp, type }, callback) => {
+        console.log('produce', kind, rtpParameters, sdp, type)
+        const peer = setPeer(socket.id,'init')
+        if (!peer.sendTransport) {
+          return callback({ error: 'Peer not found' })
+        }
+
+        const transport = peer.sendTransport
+
+
+        // Before calling produce:
+        const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
+        const videoProducer =peer.videoProducer?? await transport.produce({
+          kind: 'video',
+          rtpParameters: videoParams,
+        })
+        const audioProducer =peer.audioProducer?? await transport.produce({
+          kind: 'audio',
+          rtpParameters: audioParams,
+        })
+        // const producer = await transport.produce({ kind, rtpParameters })
+        console.log(`======video producer ${socket.id} start stream`, videoProducer)
+        console.log(`======audio producer ${socket.id} start stream`, audioProducer)
+
+        // Save both producers in the peer
+
+
+        peer.videoProducer=videoProducer
+        peer.audioProducer=audioProducer
+
+        // Notify others about each producer separately
+        SocketioService.wsio.emit('streamer-added', {
+          id: socket.id,
+           video_id: videoProducer.id,
+          audio_id: audioProducer.id,
+        })
+
+        // socket.broadcast.emit('new-producer', {
+        //   socketId: socket.id,
+        //   producerId: videoProducer.id,
+        //   kind: 'video',
+        // })
+        //
+        // socket.broadcast.emit('new-producer', {
+        //   socketId: socket.id,
+        //   producerId: audioProducer.id,
+        //   kind: 'audio',
+        // })
+
+        // callback({
+        //   audioProducerId: audioProducer.id,
+        //   videoProducerId: videoProducer.id,
+        // })
+      })
+
+      // Handle consumer creation
+        socket.on('consume', async ({ streamerId, rtpCapabilities }, callback) => {
+          const streamerPeer = setPeer(streamerId,'init')
+          const viewerPeer = setPeer(socket.id,'init')
+
+          if (!streamerPeer) {
+            return callback({ error: 'Streamer not found' })
+          }
+          if (!viewerPeer) {
+            return callback({ error: 'Viewer peer not found' })
+          }
+          if (!viewerPeer.receiveTransport) {
+            return callback({ error: 'Recv transport not found' })
+          }
+
+          try {
+            const consumersData:{video: any,audio:any} = {
+              video: null,
+              audio: null,
+            };
+
+            // Consume video if available
+            if (streamerPeer.videoProducer) {
+              const videoConsumer = await viewerPeer.receiveTransport.consume({
+                producerId: streamerPeer.videoProducer.id,
+                rtpCapabilities,
+                paused: false,
+              });
+              viewerPeer.consumers.set(`${streamerId}-video`, videoConsumer);
+              consumersData.video = {
+                id: videoConsumer.id,
+                kind: videoConsumer.kind,
+                rtpParameters: videoConsumer.rtpParameters,
+              };
+            }
+
+            // Consume audio if available
+            if (streamerPeer.audioProducer) {
+              const audioConsumer = await viewerPeer.receiveTransport.consume({
+                producerId: streamerPeer.audioProducer.id,
+                rtpCapabilities,
+                paused: false,
+              });
+              viewerPeer.consumers.set(`${streamerId}-audio`, audioConsumer);
+              consumersData.audio = {
+                id: audioConsumer.id,
+                kind: audioConsumer.kind,
+                rtpParameters: audioConsumer.rtpParameters,
+              };
+            }
+
+            callback(consumersData);
+          } catch (error) {
+            console.error('Error consuming stream:', error);
+            callback({ error: error.message });
+          }
+        });
+
+        //***********end mediasoup
 
       socket.on('JoinRoom', (data) => {
         console.log(`    ------ Joined room: ${data.roomId}`)

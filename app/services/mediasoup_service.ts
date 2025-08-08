@@ -8,11 +8,23 @@ import {
   getSupportedRtpCapabilities,
   parseScalabilityMode,
 } from 'mediasoup'
+import { Consumer, Producer, Transport } from 'mediasoup/types'
 
 let worker: msTypes.Worker
 let router: msTypes.Router
 
 let transports: any[] = []
+
+interface PeerData {
+  id: string | null
+  sendTransport: Transport | null
+  receiveTransport: Transport | null
+  videoProducer: Producer | null
+  audioProducer: Producer | null
+  consumers: Map<string, Consumer>
+}
+const peers: Map<string, PeerData> = new Map()
+
 export const mediaCodecs: any = [
   {
     kind: 'audio',
@@ -129,4 +141,55 @@ export function filterSupportedCodecs(rtpParameters: msTypes.RtpParameters) {
     encodings: audioEncodings,
   }
   return { videoParams, audioParams }
+}
+export function setPeer(id: any, cmnd: any, data: any = null): any {
+  const peer: PeerData = setPeer(id, 'init')
+
+  switch (cmnd) {
+    case 'init':
+      if (!peers.has(id))
+        peers.set(id, {
+          id: id,
+          sendTransport: null,
+          receiveTransport: null,
+          videoProducer: null,
+          audioProducer: null,
+          consumers: new Map(),
+        })
+      return peers.get(id)
+
+    case 'remove':
+      try {
+        // Close both producers if they exist
+        peer.videoProducer?.close()
+        peer.audioProducer?.close()
+        // Close both transports
+        peer.sendTransport?.close()
+        peer.receiveTransport?.close()
+
+        // Close all consumers
+
+        // Close all consumers in the map
+        peer.consumers.forEach((consumer) => {
+          try {
+            consumer.close()
+          } catch (err) {
+            console.error('Error closing consumer:', err)
+          }
+        })
+
+        console.log(`✅ Cleaned up peer ${id}`)
+      } catch (err) {
+        console.error(`❌ Error cleaning peer ${id}:`, err)
+      }
+      break
+
+    case 'send-transport':
+    case 'receive-transport':
+      if (cmnd === 'send-transport') {
+        peer.sendTransport = data
+      } else if (cmnd === 'receive-transport') {
+        peer.receiveTransport = data
+      }
+  }
 }
