@@ -64,7 +64,16 @@ export default class SocketioService {
 
           // Handle producer creation
           socket.on('produce', async ({ kind, rtpParameters }, callback) => {
-            const transport = peers.get(socket.id).transport
+            const peer = peers.get(socket.id)
+            if (!peer) {
+              return callback({ error: 'Peer not found' })
+            }
+
+            // Usually you use the first transport created by this peer for producing:
+            const transport = peer.transports[0]
+            if (!transport) {
+              return callback({ error: 'Transport not found' })
+            }
             const producer = await transport.produce({ kind, rtpParameters })
             console.log(`producer ${socket.id} start stream`, producer)
 
