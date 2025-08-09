@@ -142,8 +142,20 @@ export function filterSupportedCodecs(rtpParameters: msTypes.RtpParameters) {
   }
   return { videoParams, audioParams }
 }
+export function getPeer(id) {
+  if (!peers.has(id))
+    peers.set(id, {
+      id: id,
+      sendTransport: null,
+      receiveTransport: null,
+      videoProducer: null,
+      audioProducer: null,
+      consumers: new Map(),
+    })
+  return peers.get(id)
+}
 export function setPeer(id: any, cmnd: any, data: any = null): any {
-  const peer: PeerData = setPeer(id, 'init')
+  const peer: PeerData = getPeer(id)
 
   switch (cmnd) {
     case 'init':
@@ -191,5 +203,6 @@ export function setPeer(id: any, cmnd: any, data: any = null): any {
       } else if (cmnd === 'receive-transport') {
         peer.receiveTransport = data
       }
+      break
   }
 }
