@@ -4,7 +4,7 @@ import {
   createWebRtcTransport,
   filterSupportedCodecs,
   getRouterRtpCapabilities,
-  initMediasoup,
+  initMediasoup, mapCodecsToRouter,
   mediaCodecs,
   setPeer,
 } from '#services/mediasoup_service'
@@ -71,7 +71,7 @@ export default class SocketioService {
       })
 
       // Handle producer creation
-      socket.on('produce', async ({ kind, rtpParameters, sdp, type }, callback) => {
+      socket.on('produce', async ({ kind, rtpParameters={}, sdp, type }, callback) => {
         // console.log('produce', kind, rtpParameters, sdp, type)
 
         const peer = setPeer(socket.id,'init')
@@ -81,7 +81,8 @@ export default class SocketioService {
 
         const transport = peer.sendTransport
 
-
+        rtpParameters.codecs = mapCodecsToRouter(rtpParameters.codecs );
+        console.log('rtpParameters', rtpParameters)
         // Before calling produce:
         const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
         console.log('produce video', videoParams)
