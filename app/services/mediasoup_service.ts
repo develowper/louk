@@ -205,19 +205,17 @@ export function setPeer(id: any, cmnd: any, data: any = null): any {
       }
       break
   }
-
-  export function mapCodecsToRouter(codecs) {
-    return codecs.map((codec) => {
-      const match = router?.rtpCapabilities?.codecs?.find(
-        (c) =>
-          c.mimeType.toLowerCase() === codec.mimeType.toLowerCase() &&
-          c.clockRate === codec.clockRate
-      )
-      if (!match) throw new Error(`No matching codec in router for ${codec.mimeType}`)
-      return {
-        ...codec,
-        payloadType: match.preferredPayloadType,
-      }
-    })
-  }
+}
+export function mapCodecsToRouter(codecs) {
+  return codecs.map((codec) => {
+    const match = router?.rtpCapabilities?.codecs?.find(
+      (c) =>
+        c.mimeType.toLowerCase() === codec.mimeType.toLowerCase() && c.clockRate === codec.clockRate
+    )
+    if (!match) throw new Error(`No matching codec in router for ${codec.mimeType}`)
+    return {
+      ...codec,
+      payloadType: match.preferredPayloadType,
+    }
+  })
 }
