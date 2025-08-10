@@ -2,7 +2,7 @@ import { Server } from 'socket.io'
 import server from '@adonisjs/core/services/server'
 import {
   createWebRtcTransport,
-  filterSupportedCodecs,
+  filterSupportedCodecs, getPeer,
   getRouterRtpCapabilities,
   initMediasoup, mapCodecsToRouter,
   mediaCodecs, router,
@@ -74,7 +74,7 @@ export default class SocketioService {
       socket.on('produce', async ({ kind, rtpParameters={}, sdp, type }, callback) => {
         // console.log('produce', kind, rtpParameters, sdp, type)
 console.warn(router.rtpCapabilities.codecs)
-        const peer = setPeer(socket.id,'init')
+        const peer = getPeer(socket.id )
         if (!peer.sendTransport) {
           return callback({ error: 'Peer not found' })
         }
