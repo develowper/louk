@@ -71,7 +71,7 @@ export default class SocketioService {
       })
 
       // Handle producer creation
-      socket.on('produce', async ({ kind, rtpParameters={}, sdp, type }, callback) => {
+      socket.on('produce', async ({ kind, rtpVideoParams={},rtpAudioParams={}, sdp, type }, callback) => {
         // console.log('produce', kind, rtpParameters, sdp, type)
 
         const peer = getPeer(socket.id )
@@ -81,20 +81,20 @@ export default class SocketioService {
 
         const transport = peer.sendTransport
 
-        console.log('before rtpParameters', rtpParameters)
-        rtpParameters.codecs = mapCodecsToRouter(rtpParameters.codecs );
-        console.log('rtpParameters', rtpParameters)
+        rtpVideoParams.codecs = mapCodecsToRouter(rtpVideoParams.codecs );
+        rtpAudioParams.codecs = mapCodecsToRouter(rtpAudioParams.codecs );
+        console.log('rtpParameters', rtpVideoParams,rtpAudioParams)
         // Before calling produce:
-        const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
-        console.log('produce video', videoParams)
-        console.log('produce audio', audioParams )
+        // const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
+        console.log('produce video', rtpVideoParams)
+        console.log('produce audio', rtpAudioParams )
         const videoProducer =peer.videoProducer?? await transport.produce({
           kind: 'video',
-          rtpParameters: videoParams,
+          rtpParameters: rtpVideoParams,
         })
         const audioProducer =peer.audioProducer?? await transport.produce({
           kind: 'audio',
-          rtpParameters: audioParams,
+          rtpParameters: rtpAudioParams,
         })
         // const producer = await transport.produce({ kind, rtpParameters })
         console.log(`======video producer ${socket.id} start stream`, videoProducer)
