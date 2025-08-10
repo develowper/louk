@@ -229,6 +229,7 @@ export function mapCodecsToRouter(codecs) {
       return {
         ...codec,
         payloadType: match.preferredPayloadType,
+        parameters: { ...match.parameters },
       }
     })
     .filter(Boolean)
