@@ -5,7 +5,7 @@ import {
   filterSupportedCodecs,
   getRouterRtpCapabilities,
   initMediasoup, mapCodecsToRouter,
-  mediaCodecs,
+  mediaCodecs, router,
   setPeer,
 } from '#services/mediasoup_service'
 
@@ -73,7 +73,7 @@ export default class SocketioService {
       // Handle producer creation
       socket.on('produce', async ({ kind, rtpParameters={}, sdp, type }, callback) => {
         // console.log('produce', kind, rtpParameters, sdp, type)
-
+console.warn(router.rtpCapabilities.codecs)
         const peer = setPeer(socket.id,'init')
         if (!peer.sendTransport) {
           return callback({ error: 'Peer not found' })
