@@ -73,7 +73,7 @@ export default class SocketioService {
       // Handle producer creation
       socket.on('produce', async ({ kind, rtpParameters={}, sdp, type }, callback) => {
         // console.log('produce', kind, rtpParameters, sdp, type)
-console.warn(router.rtpCapabilities.codecs)
+
         const peer = getPeer(socket.id )
         if (!peer.sendTransport) {
           return callback({ error: 'Peer not found' })
