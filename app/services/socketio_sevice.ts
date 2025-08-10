@@ -81,6 +81,7 @@ export default class SocketioService {
 
         const transport = peer.sendTransport
 
+        console.log('before rtpParameters', rtpParameters)
         rtpParameters.codecs = mapCodecsToRouter(rtpParameters.codecs );
         console.log('rtpParameters', rtpParameters)
         // Before calling produce:
