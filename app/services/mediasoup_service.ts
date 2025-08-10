@@ -49,14 +49,14 @@ export const mediaCodecs: any = [
       'level-asymmetry-allowed': 1,
     },
   },
-  {
-    kind: 'video',
-    mimeType: 'video/H265',
-    clockRate: 90000,
-    parameters: {
-      'profile-id': 1, // adjust as needed
-    },
-  },
+  // {
+  //   kind: 'video',
+  //   mimeType: 'video/H265',
+  //   clockRate: 90000,
+  //   parameters: {
+  //     'profile-id': 1, // adjust as needed
+  //   },
+  // },
 ]
 export async function initMediasoup() {
   worker = await createWorker({
