@@ -49,6 +49,14 @@ export const mediaCodecs: any = [
       'level-asymmetry-allowed': 1,
     },
   },
+  {
+    kind: 'video',
+    mimeType: 'video/H265',
+    clockRate: 90000,
+    parameters: {
+      'profile-id': 1, // adjust as needed
+    },
+  },
 ]
 export async function initMediasoup() {
   worker = await createWorker({
@@ -207,15 +215,21 @@ export function setPeer(id: any, cmnd: any, data: any = null): any {
   }
 }
 export function mapCodecsToRouter(codecs) {
-  return codecs.map((codec) => {
-    const match = router?.rtpCapabilities?.codecs?.find(
-      (c) =>
-        c.mimeType.toLowerCase() === codec.mimeType.toLowerCase() && c.clockRate === codec.clockRate
-    )
-    if (!match) throw new Error(`No matching codec in router for ${codec.mimeType}`)
-    return {
-      ...codec,
-      payloadType: match.preferredPayloadType,
-    }
-  })
+  return codecs
+    .map((codec) => {
+      const match = router?.rtpCapabilities?.codecs?.find(
+        (c) =>
+          c.mimeType.toLowerCase() === codec.mimeType.toLowerCase() &&
+          c.clockRate === codec.clockRate
+      )
+      if (!match) {
+        console.warn(`⚠ Skipping unsupported codec: ${codec.mimeType}`)
+        return null
+      }
+      return {
+        ...codec,
+        payloadType: match.preferredPayloadType,
+      }
+    })
+    .filter(Boolean)
 }
