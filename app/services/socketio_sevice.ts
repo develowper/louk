@@ -27,7 +27,7 @@ export default class SocketioService {
       socket.on('disconnect', () => {
         setPeer(socket.id, 'remove')
         // Broadcast updated streamer list
-        socket.broadcast.emit('streamer-removed', { id: socket.id })
+        SocketioService.wsio.emit('streamer-removed', { id: socket.id })
 
       })
       // Step 1: Send Router RTP Capabilities
@@ -221,7 +221,7 @@ export default class SocketioService {
           }
 
           // Optionally notify other clients that this streamer stopped producing
-          socket.broadcast.emit('streamer-removed', { id: socket.id });
+          SocketioService.wsio.emit('streamer-removed', { id: socket.id });
 
           // Optionally update peer state or remove if needed
           setPeer(socket.id, 'remove');
