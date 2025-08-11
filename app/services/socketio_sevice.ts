@@ -133,8 +133,8 @@ export default class SocketioService {
 
       // Handle consumer creation
         socket.on('consume', async ({ streamerId, rtpCapabilities }, callback) => {
-          const streamerPeer = setPeer(streamerId,'init')
-          const viewerPeer = setPeer(socket.id,'init')
+          const streamerPeer = getPeer(streamerId )
+          const viewerPeer = getPeer(socket.id )
 
           if (!streamerPeer) {
             return callback({ error: 'Streamer not found' })
