@@ -190,7 +190,8 @@ export default class SocketioService {
         });
 
         socket.on('stopProduce', async () => {
-          const peer = setPeer(socket.id, 'init'); // get peer
+          const peer = getPeer(socket.id ); // get peer
+          console.log(`----stopProduce ${peer?.id} `);
 
           if (!peer) {
             console.warn(`Peer ${socket.id} not found on stopProduce`);
