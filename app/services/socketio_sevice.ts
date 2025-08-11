@@ -135,7 +135,7 @@ export default class SocketioService {
         socket.on('consume', async ({ streamerId, rtpCapabilities }, callback) => {
           const streamerPeer = getPeer(streamerId )
           const viewerPeer = getPeer(socket.id )
-
+            rtpCapabilities=router.rtpCapabilities
           if (!streamerPeer) {
             return callback({ error: 'Streamer not found' })
           }
@@ -156,7 +156,7 @@ export default class SocketioService {
             if (streamerPeer.videoProducer) {
               const videoConsumer = await viewerPeer.receiveTransport.consume({
                 producerId: streamerPeer.videoProducer.id,
-                streamerPeer?.videoProducer?.rtpParameters,
+                rtpCapabilities
                 paused: false,
               });
               viewerPeer.consumers.set(`${streamerId}-video`, videoConsumer);
@@ -171,7 +171,7 @@ export default class SocketioService {
             if (streamerPeer.audioProducer) {
               const audioConsumer = await viewerPeer.receiveTransport.consume({
                 producerId: streamerPeer.audioProducer.id,
-                streamerPeer?.audioProducer?.rtpParameters,
+                rtpCapabilities
                 paused: false,
               })
               viewerPeer.consumers.set(`${streamerId}-audio`, audioConsumer);
