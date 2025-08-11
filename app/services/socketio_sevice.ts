@@ -109,8 +109,8 @@ export default class SocketioService {
         // Notify others about each producer separately
         SocketioService.wsio.emit('streamer-added', {
           id: socket.id,
-           video_id: videoProducer.id,
-          audio_id: audioProducer.id,
+           video_producer_id: videoProducer.id,
+          audio_producer_id: audioProducer.id,
         })
 
         // socket.broadcast.emit('new-producer', {
@@ -125,10 +125,10 @@ export default class SocketioService {
         //   kind: 'audio',
         // })
 
-        // callback({
-        //   audioProducerId: audioProducer.id,
-        //   videoProducerId: videoProducer.id,
-        // })
+        callback({ id: socket.id,
+          video_producer_id: videoProducer.id,
+          audio_producer_id: audioProducer.id,
+        })
       })
 
       // Handle consumer creation
