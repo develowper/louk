@@ -216,7 +216,7 @@ export function setPeer(id: any, cmnd: any, data: any = null): any {
 }
 export function mapCodecsToRouter(codecs) {
   return codecs
-    .map((codec) => {
+    ?.map((codec) => {
       const match = router?.rtpCapabilities?.codecs?.find(
         (c) =>
           c.mimeType.toLowerCase() === codec.mimeType.toLowerCase() &&
