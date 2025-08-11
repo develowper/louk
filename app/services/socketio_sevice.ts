@@ -229,7 +229,25 @@ export default class SocketioService {
           console.log(`Peer ${socket.id} stopped producing`);
         });
 
+        socket.on('stopConsume', ({ consumerId }, callback) => {
+          try {
+            console.log('stopConsume',consumerId)
+            const peer = getPeer(socket.id); // or peers[socket.id] depending on your data structure
+            if (!peer) throw new Error('Peer not found');
+            const consumer = peer.consumers.get(consumerId);
+            if (!consumer) throw new Error('Consumer not found');
 
+            // Close consumer and remove from peer's consumers
+            consumer.close();
+            peer.consumers.delete(consumerId);
+
+            console.log(`Consumer ${consumerId} stopped and removed from peer ${socket.id}`);
+
+            callback?.({ closed: true });
+          } catch (err) {
+            callback?.({ error: err.message });
+          }
+        });
 
         //***********end mediasoup
 
