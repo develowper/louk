@@ -181,7 +181,7 @@ export default class SocketioService {
                 rtpParameters: audioConsumer.rtpParameters,
               };
             }
-
+            console.log('send Consumer Data')
             callback(consumersData);
           } catch (error) {
             console.error('Error consuming stream:', error);
@@ -234,17 +234,24 @@ export default class SocketioService {
             console.log('stopConsume',consumerId)
             const peer = getPeer(socket.id); // or peers[socket.id] depending on your data structure
             if (!peer) throw new Error('Peer not found');
-            const consumer = peer.consumers.get(consumerId);
-            if (!consumer) throw new Error('Consumer not found');
+            const consumerVideo = peer.consumers.get(`${consumerId}-video`);
+            const consumerAudio = peer.consumers.get(`${consumerId}-audio`);
+            // if (!consumer) throw new Error('Consumer not found');
 
             // Close consumer and remove from peer's consumers
-            consumer.close();
-            peer.consumers.delete(consumerId);
+            consumerVideo?.close();
+            consumerAudio?.close();
+            peer.consumers?.delete(`${consumerId}-video`);
+            peer.consumers?.delete(`${consumerId}-audio`);
 
             console.log(`Consumer ${consumerId} stopped and removed from peer ${socket.id}`);
 
             callback?.({ closed: true });
           } catch (err) {
+            console.error(`ConsumerStop Error `);
+            console.error(err);
+
+
             callback?.({ error: err.message });
           }
         });
