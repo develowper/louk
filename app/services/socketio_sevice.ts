@@ -173,7 +173,7 @@ export default class SocketioService {
             const videoConsumer = await viewerPeer.receiveTransport.consume({
               producerId: streamerPeer.videoProducer.id,
               rtpCapabilities,
-              paused: true,
+              paused: false,
             })
             viewerPeer.consumers.set(`${streamerId}-video`, videoConsumer)
             consumersData.video = {
@@ -195,7 +195,7 @@ export default class SocketioService {
             const audioConsumer = await viewerPeer.receiveTransport.consume({
               producerId: streamerPeer.audioProducer.id,
               rtpCapabilities,
-              paused: true,
+              paused: false,
             })
             viewerPeer.consumers.set(`${streamerId}-audio`, audioConsumer)
             consumersData.audio = {
