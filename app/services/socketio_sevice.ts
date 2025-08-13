@@ -78,9 +78,10 @@ export default class SocketioService {
         'produce',
         async ({ kind, rtpVideoParams = {}, rtpAudioParams = {}, sdp, type }, callback) => {
           // console.log('produce', kind, rtpParameters, sdp, type)
-
+          console.log('----------produce-------------')
           const peer = getPeer(socket.id)
           if (!peer.sendTransport) {
+            console.warn(`Peer ${socket.id} not found`)
             return callback({ error: 'Peer not found' })
           }
 
@@ -166,7 +167,7 @@ export default class SocketioService {
             kind == 'video',
             streamerPeer.videoProducer,
             router.canConsume({
-              producerId: streamerPeer.videoProducer.id,
+              producerId: streamerPeer?.videoProducer?.id,
               rtpCapabilities,
             })
           )
