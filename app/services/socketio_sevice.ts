@@ -162,7 +162,7 @@ export default class SocketioService {
 
         try {
           let consumersData = {}
-          console.log('----------consume-------------')
+          console.log(`----------consume streamer ${streamerId}-------------`)
           console.log(
             kind == 'video',
             streamerPeer.videoProducer,
