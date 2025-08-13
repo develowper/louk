@@ -147,12 +147,15 @@ export default class SocketioService {
         const viewerPeer = getPeer(socket.id)
         // rtpCapabilities = router.rtpCapabilities
         if (!streamerPeer) {
+          console.warn('Streamer not found')
           return callback({ error: 'Streamer not found' })
         }
         if (!viewerPeer) {
+          console.warn('Viewer not found')
           return callback({ error: 'Viewer peer not found' })
         }
         if (!viewerPeer.receiveTransport) {
+          console.warn('Recv transport not found')
           return callback({ error: 'Recv transport not found' })
         }
 
