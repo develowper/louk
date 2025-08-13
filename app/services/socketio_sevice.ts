@@ -144,7 +144,7 @@ export default class SocketioService {
       socket.on('consume', async ({ streamerId, kind, rtpCapabilities }, callback) => {
         const streamerPeer = getPeer(streamerId)
         const viewerPeer = getPeer(socket.id)
-        rtpCapabilities = router.rtpCapabilities
+        // rtpCapabilities = router.rtpCapabilities
         if (!streamerPeer) {
           return callback({ error: 'Streamer not found' })
         }
@@ -287,7 +287,31 @@ export default class SocketioService {
           callback?.({ error: err.message })
         }
       })
+      socket.on('transport-ice-candidate', ({ transportId, candidate }) => {
+        const peer = getPeer(socket.id)
+        if (!peer) {
+          console.warn(`Peer not found for socket ${socket.id}`)
+          return
+        }
+        const transport =
+          peer?.sendTransport?.id == transportId
+            ? peer?.sendTransport
+            : peer?.receiveTransport?.id == transportId
+              ? peer?.receiveTransport
+              : null
+        if (!transport) {
+          console.warn(`Transport not found for id ${transportId}`)
+          return
+        }
 
+        // mediasoup expects RTCIceCandidateInit-like object
+        if (candidate) {
+          transport
+            .addIceCandidate(candidate)
+            .then(() => console.log('ICE candidate added to transport'))
+            .catch((e) => console.error('Error adding ICE candidate', e))
+        }
+      })
       //***********end mediasoup
 
       socket.on('JoinRoom', (data) => {
