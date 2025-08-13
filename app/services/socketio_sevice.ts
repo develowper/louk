@@ -214,7 +214,8 @@ export default class SocketioService {
         const viewerPeer = getPeer(socket.id)
 
         // const transport = viewerPeer?.receiveTransport
-
+        console.log('viewerPeer', viewerPeer)
+        console.log('consumerId', `${producerId}-${kind}`)
         const consumer = viewerPeer?.consumers?.get(`${producerId}-${kind}`)
         console.log('resumeConsumer', consumer)
         consumer?.resume() // start receiving packets
