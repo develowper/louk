@@ -158,22 +158,30 @@ export default class SocketioService {
 
         try {
           let consumersData = {}
-
+          console.log('----------consume-------------')
+          console.log(
+            kind == 'video' &&
+              streamerPeer.videoProducer &&
+              router.canConsume({
+                producerId: streamerPeer.videoProducer.id,
+                rtpCapabilities,
+              })
+          )
           // Consume video if available
           if (
-            kind == 'video' &&
-            streamerPeer.videoProducer &&
+            (kind == 'video',
+            streamerPeer.videoProducer,
             router.canConsume({
               producerId: streamerPeer.videoProducer.id,
               rtpCapabilities,
-            })
+            }))
           ) {
             const videoConsumer = await viewerPeer.receiveTransport.consume({
               producerId: streamerPeer.videoProducer.id,
               rtpCapabilities,
               paused: false,
             })
-            console.log('----------consume-------------')
+
             console.log('streamerPeer', streamerId)
             console.log('streamerPeerVideoProducerId', streamerPeer.videoProducer.id)
             viewerPeer.consumers.set(`${streamerId}-video`, videoConsumer)
