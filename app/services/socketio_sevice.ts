@@ -229,7 +229,7 @@ export default class SocketioService {
       socket.on('resumeConsumer', async ({ producerId, kind }, callback) => {
         const streamerPeer = getPeer(producerId)
         const viewerPeer = getPeer(socket.id)
-
+        console.log(`----------resumeConsumer streamer ${producerId}-------------`)
         // const transport = viewerPeer?.receiveTransport
         console.log('viewerPeer', viewerPeer)
         console.log('consumerId', `${producerId}-${kind}`)
