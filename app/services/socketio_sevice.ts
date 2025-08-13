@@ -156,10 +156,7 @@ export default class SocketioService {
         }
 
         try {
-          const consumersData: { video: any; audio: any } = {
-            video: null,
-            audio: null,
-          }
+          let consumersData = {}
 
           // Consume video if available
           if (
@@ -176,7 +173,7 @@ export default class SocketioService {
               paused: false,
             })
             viewerPeer.consumers.set(`${streamerId}-video`, videoConsumer)
-            consumersData.video = {
+            consumersData = {
               id: videoConsumer.id,
               kind: videoConsumer.kind,
               rtpParameters: videoConsumer.rtpParameters,
@@ -198,7 +195,7 @@ export default class SocketioService {
               paused: false,
             })
             viewerPeer.consumers.set(`${streamerId}-audio`, audioConsumer)
-            consumersData.audio = {
+            consumersData = {
               id: audioConsumer.id,
               kind: audioConsumer.kind,
               rtpParameters: audioConsumer.rtpParameters,
