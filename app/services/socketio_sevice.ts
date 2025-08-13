@@ -29,6 +29,7 @@ export default class SocketioService {
 
       socket.on('disconnect', () => {
         setPeer(socket.id, 'remove')
+
         // Broadcast updated streamer list
         SocketioService.wsio.emit('streamer-removed', { id: socket.id })
       })
@@ -215,7 +216,7 @@ export default class SocketioService {
         // const transport = viewerPeer?.receiveTransport
 
         const consumer = viewerPeer?.consumers?.get(`${producerId}-${kind}`)
-
+        console.log('resumeConsumer', consumer)
         consumer?.resume() // start receiving packets
         callback({ status: 'success' })
       })
