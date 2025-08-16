@@ -16,7 +16,13 @@ export default class SocketioService {
   public static wsio: Server
 
   public async init() {
-    SocketioService.wsio = new Server(server.getNodeServer(), {})
+    SocketioService.wsio = new Server(server.getNodeServer(), {
+      cors: {
+        // origin: 'http://127.0.0.1:1191',
+        origin: '*',
+        methods: ['GET', 'POST'],
+      },
+    })
 
     await initMediasoup()
 
