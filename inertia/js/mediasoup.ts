@@ -96,6 +96,7 @@ export async function useMediasoup() {
         video: { deviceId: videoDevice?.deviceId || undefined },
       })
     },
+
     async startWebcam() {
       if (!this.device || !this.sendTransport) await this.init()
 
