@@ -114,8 +114,8 @@ export default class SocketioService {
         if (kind == 'video')
           SocketioService.wsio.emit('streamer-added', {
             id: socket.id,
-            video_producer_id: peer.videoProducer,
-            audio_producer_id: peer.audioProducer,
+            video_producer_id: peer.videoProducer?.id,
+            audio_producer_id: peer.audioProducer?.id,
           })
 
         // socket.broadcast.emit('new-producer', {
@@ -132,8 +132,8 @@ export default class SocketioService {
 
         callback({
           id: socket.id,
-          video_producer_id: videoProducer.id,
-          audio_producer_id: audioProducer.id,
+          video_producer_id: peer.videoProducer?.id,
+          audio_producer_id: peer.audioProducer?.id,
         })
       })
 
