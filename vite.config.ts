@@ -21,4 +21,7 @@ export default defineConfig({
       '~/': `${getDirname(import.meta.url)}/inertia/`,
     },
   },
+  server: {
+    allowedHosts: ['*'], // 👈 add your domain here
+  },
 })
