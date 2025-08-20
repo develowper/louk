@@ -41,7 +41,7 @@ export default class SocketioService {
         SocketioService.wsio.emit('streamer-removed', { id: socket.id })
       })
       // Step 1: Send Router RTP Capabilities
-      socket.on('getRouterRtpCapabilities', (_, callback) => {
+      socket.on('getRouterRtpCapabilities', (callback) => {
         console.log(callback)
         console.log('getRouterRtpCapabilities')
         return getRouterRtpCapabilities()
@@ -52,14 +52,14 @@ export default class SocketioService {
         console.log('createWebRtcTransport', transport.id)
         // Store transport in peers map
         setPeer(socket.id, `${direction}-transport`, transport)
-        return {
+        callback({
           status: 'success',
           id: transport.id,
           iceParameters: transport.iceParameters,
           iceCandidates: transport.iceCandidates,
           dtlsParameters: transport.dtlsParameters,
           sctpParameters: transport.sctpParameters,
-        }
+        })
       })
       // Handle DTLS Connect
       socket.on('connectTransport', async ({ transportId, dtlsParameters }, callback) => {
