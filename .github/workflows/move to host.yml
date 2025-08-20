@@ -21,3 +21,6 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            .editorconfig
+            adonisrc.ts
+            ace.js
