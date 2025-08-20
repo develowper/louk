@@ -2,21 +2,31 @@
 import Scaffold from '~/layouts/Scaffold.vue'
 import { Head } from '@inertiajs/vue3'
 import { __, useSocket } from '~/js/composables'
-import { onBeforeUnmount, onMounted } from 'vue'
-import {useMediasoup} from "~/js/mediasoup";
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useMediasoup } from '~/js/mediasoup'
+const localVideo = ref<HTMLVideoElement | null>(null)
 
-const socket = useSocket()
-const mediasoupInit =async () => {
-  const {device,msClient}= await useMediasoup()
-}
+const { device, msClient, msHelper, socket } = await useMediasoup()
+const isStreaming = ref(false)
 
 const socketLeave = () => {
   if (socket) {
     // socket.off('connect')
   }
 }
-onMounted(() => {
-  mediasoupInit()
+const toggleStream = async () => {
+  if (!isStreaming.value) {
+    await msHelper.startWebcam()
+    if (localVideo.value) localVideo.value.srcObject = msHelper.localStream || null
+    isStreaming.value = true
+  } else {
+    await msHelper.stopWebcam()
+    if (localVideo.value) localVideo.value.srcObject = null
+    isStreaming.value = false
+  }
+}
+onMounted(async () => {
+  await msHelper.init()
 })
 onBeforeUnmount(() => {
   socketLeave()
@@ -26,62 +36,32 @@ onBeforeUnmount(() => {
 <template>
   <Scaffold>
     <Head :title="__('streamer')" />
-    <div id="local-control">
-      <div id="join-control">
-        <button id="join-button" onclick="Client.joinRoom()">
-          join room
+    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <h1 class="text-2xl font-bold mb-4">Mediasoup Webcam Streamer</h1>
+
+      <div class="w-full max-w-lg bg-white p-4 rounded-lg shadow-md">
+        <video
+          ref="localVideo"
+          autoplay
+          muted
+          playsinline
+          class="w-full rounded-md border border-gray-300"
+        ></video>
+
+        <button
+          @click="toggleStream"
+          :class="isStreaming ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'"
+          class="px-6 py-2 rounded text-white font-semibold transition-colors duration-200"
+        >
+          {{ isStreaming ? 'Stop Stream' : 'Start Stream' }}
         </button>
-        <span class="arrow"> &#x21E2; </span>
+        <p class="text-gray-600">
+          Status:
+          <span :class="isStreaming ? 'text-green-600' : 'text-red-600'">{{
+            isStreaming ? 'Streaming' : 'Stopped'
+          }}</span>
+        </p>
       </div>
-
-      <div id="camera-control">
-        <button id="send-camera" onclick="Client.sendCameraStreams()">
-          send camera streams
-        </button>
-        <button id="stop-streams" onclick="Client.stopStreams()">
-          stop streams
-        </button>
-        <span id="camera-info"></span>
-        <button id="share-screen" onclick="Client.startScreenshare()">
-          share screen
-        </button>
-        <div id="outgoing-cam-streams-ctrl">
-          <div><input id="local-cam-checkbox" type="checkbox" checked
-                      onchange="Client.changeCamPaused()"></input>
-            <label id="local-cam-label">camera</label>
-            <span id="camera-producer-stats" class="track-ctrl"></span>
-          </div>
-          <div><input id="local-mic-checkbox" type="checkbox" checked
-                      onchange="Client.changeMicPaused()"></input>
-            <label id="local-mic-label">mic</label></div>
-          <div id="local-screen-pause-ctrl">
-            <input id="local-screen-checkbox" type="checkbox" checked
-                   onchange="Client.changeScreenPaused()"></input>
-            <label id="local-screen-label">screen</label>
-            <span id="screen-producer-stats" class="track-ctrl"></span>
-          </div>
-          <div id="local-screen-audio-pause-ctrl">
-            <input id="local-screen-audio-checkbox" type="checkbox" checked
-                   onchange="Client.changeScreenAudioPaused()"></input>
-            <label id="local-screen-audio-label">screen audio</label>
-            <span id="screen-audio-producer-stats" class="track-ctrl"></span>
-          </div>
-        </div>
-      </div>
-
-      <button id="leave-room" onclick="Client.leaveRoom()">
-        leave room
-      </button>
-
-    </div>
-
-    <div id="available-tracks">
-    </div>
-
-    <div id="remote-video">
-    </div>
-
-    <div id="remote-audio">
     </div>
   </Scaffold>
 </template>
