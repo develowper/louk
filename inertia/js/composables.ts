@@ -27,6 +27,7 @@ export function useSocket() {
     // Just call emitWithAck directly, return the Promise
     return socket.emitWithAck(event, ...args)
   }
+
   return socket
 }
 
