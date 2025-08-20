@@ -86,7 +86,16 @@ export async function useMediasoup() {
         }
       )
     },
+    async getWebcamStream() {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const videoDevice = devices.find(
+        (d) => d.kind === 'videoinput' && d.label.includes('HD Camera')
+      ) // adjust name
 
+      return navigator.mediaDevices.getUserMedia({
+        video: { deviceId: videoDevice?.deviceId || undefined },
+      })
+    },
     async startWebcam() {
       if (!this.device || !this.sendTransport) await this.init()
 
