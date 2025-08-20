@@ -103,7 +103,6 @@ export async function useMediasoup() {
       }
     }
   )
-
   // Produce our webcam video.
   const stream = await navigator.mediaDevices.getUserMedia({ video: true })
   const webcamTrack = stream.getVideoTracks()[0]
