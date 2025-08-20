@@ -99,16 +99,33 @@ export async function useMediasoup() {
     },
 
     async startWebcam() {
-      if (!this.device || !this.sendTransport) await this.init()
+      if (!this.device || !this.sendTransport) {
+        await this.init()
+      }
 
-      this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      try {
+        // Must be called inside a user-gesture (button click)
+        this.localStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user' }, // front camera on mobile
+          audio: { echoCancellation: true },
+        })
 
-      this.webcamProducer = await this.sendTransport!.produce({
-        track: this.localStream.getVideoTracks()[0],
-      })
-      this.audioProducer = await this.sendTransport!.produce({
-        track: this.localStream.getAudioTracks()[0],
-      })
+        // Attach to transport
+        const [videoTrack] = this.localStream.getVideoTracks()
+        const [audioTrack] = this.localStream.getAudioTracks()
+
+        if (videoTrack) {
+          this.webcamProducer = await this.sendTransport!.produce({ track: videoTrack })
+        }
+        if (audioTrack) {
+          this.audioProducer = await this.sendTransport!.produce({ track: audioTrack })
+        }
+
+        return this.localStream
+      } catch (err) {
+        console.error('Failed to getUserMedia', err)
+        throw err
+      }
     },
 
     async stopWebcam() {
