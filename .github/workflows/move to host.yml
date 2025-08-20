@@ -10,7 +10,7 @@ jobs:
       - name: Sync files
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
         with:
-          server: 195.214.235.75
+          server: test.vache-revive.ir
           protocol: ftp
           port: 21
           username: admin_admin
