@@ -6,7 +6,8 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useMediasoup } from '~/js/mediasoup'
 const localVideo = ref<HTMLVideoElement | null>(null)
 
-const { device, msClient, msHelper, socket } = await useMediasoup()
+let device: any, msClient: any, msHelper: any, socket: any
+
 const isStreaming = ref(false)
 
 const socketLeave = () => {
@@ -26,7 +27,8 @@ const toggleStream = async () => {
   }
 }
 onMounted(async () => {
-  await msHelper.init()
+  const ms = await useMediasoup()
+  ;({ device, msClient, msHelper, socket } = ms)
 })
 onBeforeUnmount(() => {
   socketLeave()
