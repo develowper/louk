@@ -29,6 +29,8 @@ const toggleStream = async () => {
 onMounted(async () => {
   const ms = await useMediasoup()
   ;({ device, msClient, msHelper, socket } = ms)
+
+  msHelper.init()
 })
 onBeforeUnmount(() => {
   socketLeave()

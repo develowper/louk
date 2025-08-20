@@ -70,7 +70,7 @@ export async function useMediasoup() {
           // Here we must communicate our local parameters to our remote transport.
           try {
             const { id } = await socket.request('produceData', {
-              transportId: sendTransport.id,
+              transportId: this.sendTransport.id,
               sctpStreamParameters,
               label,
               protocol,
