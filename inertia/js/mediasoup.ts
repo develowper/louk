@@ -86,6 +86,7 @@ export async function useMediasoup() {
         }
       )
     },
+
     async getWebcamStream() {
       const devices = await navigator.mediaDevices.enumerateDevices()
       const videoDevice = devices.find(
