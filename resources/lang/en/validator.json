@@ -1,0 +1,39 @@
+{
+  "shared": {
+    "fields": {
+      "full_name": "نام و نام خانوادگی",
+      "first_name": "نام",
+      "username": "نام کاربری",
+      "password": "رمز عبور",
+      "phone": "شماره تماس",
+      "amount": "مبلغ",
+      "card": "شماره کارت",
+      "sheba": "شماره شبا",
+      "count": "تعداد",
+      "role": "نقش",
+      "rwp": "درصد برد ربات",
+      "": ""
+    },
+    "messages": {
+      "string": "{field} ضروری است",
+      "required": "{field} ضروری است",
+      "number": "{field} عددی باشد",
+      "unique": "{field} تکراری است",
+      "database.unique": "{field} تکراری است",
+      "fixedLength": "طول {field} {size} باشد",
+      "regex": "{field} نامعتبر است",
+      "card.regex": "شماره کارت 16 رقمی باشد",
+      "sheba.regex": "شماره شبا 24 رقمی باشد",
+      "confirmed": "{field} با تکرار آن برابر نیست",
+      "username.regex": "نام کاربری حداقل 5 حرف و شامل حروف و اعداد انگلیسی باشد",
+      "password.regex": "رمز عبور حداقل 6 حرف و شامل حروف و اعداد انگلیسی باشد",
+      "minLength": "طول {field} حداقل {min } باشد",
+      "maxLength": "طول {field} حداکثر {max } باشد",
+      "positive": "مقدار {field} بزرگتر از 0 باشد",
+      "min": "مقدار {field} حداقل {min } باشد",
+      "max": "مقدار {field} حداکثر {max } باشد",
+      "fullName.required": "Choose a username for your account",
+      "email": "The email must be valid"
+    }
+  }
+}

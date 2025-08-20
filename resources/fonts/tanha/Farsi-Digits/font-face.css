@@ -1,0 +1,17 @@
+@font-face {
+    font-family: Tanha;
+    src: url('Tanha-FD.eot');
+    src: /*url('Tanha-FD.eot?#iefix') format('FontName-opentype'),*/ url('Tanha-FD.woff') format('woff'),
+    url('Tanha-FD.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/*@font-face {*/
+/*    font-family: Sahel ;*/
+/*    src: url('Tanha-Bold-FD.eot');*/
+/*    src: url('Tanha-Bold-FD.eot?#iefix') format('embedded-opentype'),*/
+/*    url('Tanha-Bold-FD.woff') format('woff'),*/
+/*    url('Tanha-Bold-FD.ttf') format('truetype');*/
+/*    font-weight: bold;*/
+/*}*/

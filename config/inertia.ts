@@ -1,7 +1,7 @@
 import { defineConfig } from '@adonisjs/inertia'
 import type { InferSharedProps } from '@adonisjs/inertia/types'
 import env from '#start/env'
-
+import { getLangFile } from '#services/helper_service'
 const inertiaConfig = defineConfig({
   /**
    * Path to the Edge view that will be used as the root view for Inertia responses
@@ -12,6 +12,7 @@ const inertiaConfig = defineConfig({
    * Data that should be shared with all rendered pages
    */
   sharedData: {
+    language: (ctx) => getLangFile(ctx),
     socket_url: env.get('SOCKET_URL'),
     // user: (ctx) => ctx.inertia.always(() => ctx.auth.user),
   },

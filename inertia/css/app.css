@@ -1,7 +1,26 @@
 @import 'tailwindcss';
-/*@source "../../resources/views"*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@theme {
+  --color-primary: --color-blue;
+}
 html,
 body {
   height: 100%;
   width: 100%;
+}
+@source "../../resources/views";
+@config "../../tailwind.config.js";
+@layer utilities {
+  .text-primary {
+    @apply text-primary-500;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-r from-fuchsia-600 to-pink-600;
+  }
+  .hover-gradient-primary {
+    @apply hover:bg-gradient-to-r hover:from-purple-500 to-purple-900;
+  }
 }

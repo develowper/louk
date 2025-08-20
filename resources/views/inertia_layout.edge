@@ -65,10 +65,11 @@
     @vite(['inertia/app/app.ts', `inertia/pages/${page.component}.vue`])
     @inertiaHead()
     @stack('dumper')
-  </head>
+    @routes()
+    </head>
 
-  <body class="min-h-screen w-screen font-sans">
-    @inertia()
-  </body>
+    <body class="min-h-screen w-screen font-sans">
+      @inertia()
+    </body>
 
-</html>
+  </html>

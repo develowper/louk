@@ -1,5 +1,6 @@
 import { Server } from 'socket.io'
 import server from '@adonisjs/core/services/server'
+
 import {
   createWebRtcTransport,
   filterSupportedCodecs,
@@ -46,7 +47,7 @@ export default class SocketioService {
       })
       // Step 2: Create WebRTC Transport
       socket.on('createWebRtcTransport', async ({ direction }, callback) => {
-        const transport = await createWebRtcTransport()
+        const transport = await createWebRtcTransport({ peerId: socket.id, direction })
         console.log('createWebRtcTransport', transport.id)
         // Store transport in peers map
         setPeer(socket.id, `${direction}-transport`, transport)
@@ -56,6 +57,7 @@ export default class SocketioService {
           iceParameters: transport.iceParameters,
           iceCandidates: transport.iceCandidates,
           dtlsParameters: transport.dtlsParameters,
+          sctpParameters: transport.sctpParameters,
         })
       })
       // Handle DTLS Connect
@@ -80,73 +82,60 @@ export default class SocketioService {
       })
 
       // Handle producer creation
-      socket.on(
-        'produce',
-        async ({ kind, rtpVideoParams = {}, rtpAudioParams = {}, sdp, type }, callback) => {
-          // console.log('produce', kind, rtpParameters, sdp, type)
-          console.log('----------produce-------------')
-          const peer = getPeer(socket.id)
-          if (!peer.sendTransport) {
-            console.warn(`Peer ${socket.id} not found`)
-            return callback({ error: 'Peer not found' })
-          }
+      socket.on('produce', async ({ kind, rtpParameters = {}, sdp, type }, callback) => {
+        // console.log('produce', kind, rtpParameters, sdp, type)
+        console.log('----------produce-------------')
+        const peer = getPeer(socket.id)
+        if (!peer.sendTransport) {
+          console.warn(`Peer ${socket.id} not found`)
+          return callback({ error: 'Peer not found' })
+        }
 
-          const transport = peer.sendTransport
+        const transport = peer.sendTransport
 
-          rtpVideoParams.codecs = mapCodecsToRouter(rtpVideoParams.codecs)
-          rtpAudioParams.codecs = mapCodecsToRouter(rtpAudioParams.codecs)
-          console.log('rtpParameters', rtpVideoParams, rtpAudioParams)
-          // Before calling produce:
-          // const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
-          console.log('produce video', rtpVideoParams)
-          console.log('produce audio', rtpAudioParams)
-          const videoProducer =
-            peer.videoProducer ??
-            (await transport.produce({
-              kind: 'video',
-              rtpParameters: rtpVideoParams,
-            }))
-          const audioProducer =
-            peer.audioProducer ??
-            (await transport.produce({
-              kind: 'audio',
-              rtpParameters: rtpAudioParams,
-            }))
-          // const producer = await transport.produce({ kind, rtpParameters })
-          console.log(`======video producer ${socket.id} start stream`, videoProducer)
-          console.log(`======audio producer ${socket.id} start stream`, audioProducer)
+        rtpParameters.codecs = mapCodecsToRouter(rtpParameters.codecs)
+        console.log('rtpParameters', rtpParameters)
+        // Before calling produce:
+        // const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
+        console.log(`produce ${kind}`, rtpParameters)
+        const producer = await transport.produce({
+          kind: kind,
+          rtpParameters: rtpParameters,
+        })
 
-          // Save both producers in the peer
+        // const producer = await transport.produce({ kind, rtpParameters })
+        console.log(`======${kind} producer ${socket.id} start stream`, producer)
 
-          peer.videoProducer = videoProducer
-          peer.audioProducer = audioProducer
+        // Save both producers in the peer
+        if (kind == 'video') peer.videoProducer = producer
+        if (kind == 'audio') peer.audioProducer = producer
 
-          // Notify others about each producer separately
+        // Notify others about each producer separately
+        if (kind == 'video')
           SocketioService.wsio.emit('streamer-added', {
             id: socket.id,
-            video_producer_id: videoProducer.id,
-            audio_producer_id: audioProducer.id,
+            video_producer_id: peer.videoProducer,
+            audio_producer_id: peer.audioProducer,
           })
 
-          // socket.broadcast.emit('new-producer', {
-          //   socketId: socket.id,
-          //   producerId: videoProducer.id,
-          //   kind: 'video',
-          // })
-          //
-          // socket.broadcast.emit('new-producer', {
-          //   socketId: socket.id,
-          //   producerId: audioProducer.id,
-          //   kind: 'audio',
-          // })
+        // socket.broadcast.emit('new-producer', {
+        //   socketId: socket.id,
+        //   producerId: videoProducer.id,
+        //   kind: 'video',
+        // })
+        //
+        // socket.broadcast.emit('new-producer', {
+        //   socketId: socket.id,
+        //   producerId: audioProducer.id,
+        //   kind: 'audio',
+        // })
 
-          callback({
-            id: socket.id,
-            video_producer_id: videoProducer.id,
-            audio_producer_id: audioProducer.id,
-          })
-        }
-      )
+        callback({
+          id: socket.id,
+          video_producer_id: videoProducer.id,
+          audio_producer_id: audioProducer.id,
+        })
+      })
 
       // Handle consumer creation
       socket.on('consume', async ({ streamerId, kind, rtpCapabilities }, callback) => {

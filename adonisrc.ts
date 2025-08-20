@@ -25,7 +25,11 @@ export default defineConfig({
   | will be scanned automatically from the "./commands" directory.
   |
   */
-  commands: [() => import('@adonisjs/core/commands'), () => import('@adonisjs/lucid/commands')],
+  commands: [
+    () => import('@adonisjs/core/commands'),
+    () => import('@adonisjs/lucid/commands'),
+    () => import('@izzyjs/route/commands'),
+  ],
 
   /*
   |--------------------------------------------------------------------------
@@ -53,7 +57,9 @@ export default defineConfig({
     () => import('@adonisjs/lucid/database_provider'),
     () => import('@adonisjs/auth/auth_provider'),
     () => import('@adonisjs/inertia/inertia_provider'),
+    () => import('@adonisjs/i18n/i18n_provider'),
     () => import('#providers/socketio_provider'),
+    () => import('@izzyjs/route/izzy_provider'),
   ],
 
   /*
@@ -64,7 +70,11 @@ export default defineConfig({
   | List of modules to import before starting the application.
   |
   */
-  preloads: [() => import('#start/routes'), () => import('#start/kernel')],
+  preloads: [
+    () => import('#start/routes'),
+    () => import('#start/kernel'),
+    () => import('#start/globals'),
+  ],
 
   /*
   |--------------------------------------------------------------------------
@@ -109,10 +119,19 @@ export default defineConfig({
       pattern: 'public/**',
       reloadServer: false,
     },
+    {
+      pattern: 'resources/lang/**/*.{json,yaml,yml}',
+      reloadServer: false,
+    },
+    {
+      pattern: '.env',
+      reloadServer: false,
+    },
   ],
 
   assetsBundler: false,
   hooks: {
     onBuildStarting: [() => import('@adonisjs/vite/build_hook')],
+    onDevServerStarted: [() => import('@izzyjs/route/dev_hook')],
   },
 })

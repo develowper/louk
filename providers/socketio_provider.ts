@@ -1,7 +1,7 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 //import app from '@adonisjs/core/services/app'
 import SocketioService from '#services/socketio_sevice'
-
+import Helper from '#services/helper_service'
 export default class SocketioProvider {
   constructor(protected app: ApplicationService) {}
 

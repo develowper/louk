@@ -85,12 +85,13 @@ export async function initMediasoup() {
   })
   console.log(`✅ Mediasoup (v-${version}) worker (${workerBin}) and router created.`)
 }
-export async function createWebRtcTransport() {
+export async function createWebRtcTransport(appData = {}) {
   const transport = await router.createWebRtcTransport({
     listenIps: [{ ip: '0.0.0.0', announcedIp: null }], // Replace with your server's public IP if needed
     enableUdp: true,
     enableTcp: true,
     preferUdp: true,
+    appData: appData,
   })
 
   transports.push(transport)
