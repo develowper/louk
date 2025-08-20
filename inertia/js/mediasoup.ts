@@ -109,7 +109,6 @@ export async function useMediasoup() {
   const webcamTrack = stream.getVideoTracks()[0]
 
   const webcamProducer = await sendTransport.produce({ track: webcamTrack })
-
   // Produce data (DataChannel).
   const dataProducer = await sendTransport.produceData({
     ordered: true,
