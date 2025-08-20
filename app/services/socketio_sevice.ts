@@ -117,6 +117,7 @@ export default class SocketioService {
             video_producer_id: peer.videoProducer,
             audio_producer_id: peer.audioProducer,
           })
+
         // socket.broadcast.emit('new-producer', {
         //   socketId: socket.id,
         //   producerId: videoProducer.id,
