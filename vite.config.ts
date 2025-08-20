@@ -22,6 +22,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['*'], // 👈 add your domain here
+    allowedHosts: ['test.vache-revive.ir'], // 👈 add your domain here
   },
 })
