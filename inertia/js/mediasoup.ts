@@ -24,15 +24,15 @@ export async function useMediasoup() {
   msHelper = {
     async init() {
       this.device = new msClient.Device()
-
+      console.log('init mediasoup')
       const routerRtpCapabilities = await socket.request('getRouterRtpCapabilities')
       await this.device.load({ routerRtpCapabilities })
-
+      console.log(routerRtpCapabilities)
       const transportData = await socket.request('createWebRtcTransport', {
         direction: 'send',
         sctpCapabilities: this.device.sctpCapabilities,
       })
-
+      console.log(transportData)
       this.sendTransport = this.device.createSendTransport({
         id: transportData.id,
         iceParameters: transportData.iceParameters,

@@ -42,6 +42,7 @@ export default class SocketioService {
       })
       // Step 1: Send Router RTP Capabilities
       socket.on('getRouterRtpCapabilities', (_, callback) => {
+        console.log(callback)
         console.log('getRouterRtpCapabilities')
         return getRouterRtpCapabilities()
       })
