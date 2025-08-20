@@ -42,8 +42,7 @@ export default class SocketioService {
       })
       // Step 1: Send Router RTP Capabilities
       socket.on('getRouterRtpCapabilities', (_, callback) => {
-        const rtpCapabilities = getRouterRtpCapabilities()
-        callback(rtpCapabilities)
+        return getRouterRtpCapabilities()
       })
       // Step 2: Create WebRTC Transport
       socket.on('createWebRtcTransport', async ({ direction }, callback) => {
@@ -51,14 +50,14 @@ export default class SocketioService {
         console.log('createWebRtcTransport', transport.id)
         // Store transport in peers map
         setPeer(socket.id, `${direction}-transport`, transport)
-        callback({
+        return {
           status: 'success',
           id: transport.id,
           iceParameters: transport.iceParameters,
           iceCandidates: transport.iceCandidates,
           dtlsParameters: transport.dtlsParameters,
           sctpParameters: transport.sctpParameters,
-        })
+        }
       })
       // Handle DTLS Connect
       socket.on('connectTransport', async ({ transportId, dtlsParameters }, callback) => {
