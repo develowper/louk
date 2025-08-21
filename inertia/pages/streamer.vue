@@ -28,6 +28,12 @@ const toggleStream = async () => {
     isStreaming.value = false
   }
 }
+const onCameraChange = async (newCam) => {
+  await msHelper.switchCamera(newCam)
+  if (isStreaming.value && localVideo.value) {
+    localVideo.value.srcObject = msHelper.localStream
+  }
+}
 async function switchCam() {
   if (!selectedCamera.value) return
   const stream = await msHelper.switchCamera(selectedCamera.value)
@@ -41,11 +47,9 @@ onMounted(async () => {
   cameras.value = await msHelper.getCameras()
   if (cameras.value.length) selectedCamera.value = cameras.value[0].deviceId
 })
-watch(selectedCamera, async (newVal) => {
-  await msHelper.switchCamera(newVal)
-  if (localVideo.value) {
-    localVideo.value.srcObject = msHelper.localStream || null
-  }
+watch(selectedCamera, async (newCamera) => {
+  if (!newCamera) return
+  onCameraChange(newCamera)
 })
 onBeforeUnmount(() => {
   socketLeave()
