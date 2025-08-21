@@ -230,9 +230,8 @@ export async function useMediasoup() {
           transportId: this.consumerTransport!.id,
         })
 
-
         if (!params) continue
-
+        console.log(params)
         const consumer = await this.consumerTransport!.consume(params)
         this.consumers.push(consumer)
         stream.addTrack(consumer.track)

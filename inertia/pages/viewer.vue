@@ -33,7 +33,14 @@ onBeforeUnmount(() => {
     <Head title="Viewer" />
     <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 class="text-xl font-bold mb-4">Watching Streamer: {{ streamer?.id }}</h1>
-      <video ref="videoEl" autoplay playsinline controls class="w-full max-w-2xl rounded shadow" />
+      <video
+        ref="videoEl"
+        muted
+        autoplay
+        playsinline
+        controls
+        class="w-full max-w-2xl rounded shadow"
+      />
     </div>
   </Scaffold>
 </template>
