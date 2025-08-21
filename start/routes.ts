@@ -18,8 +18,10 @@ router
     return inertia.render('streamer', {})
   })
   .as('streamer')
-router.get('streams/:id', async ({ inertia, request }) => {
-  return inertia.render('viewer', {
-    streamer: getPeer(request.param('id')),
+router
+  .get('streams/:id', async ({ inertia, request }) => {
+    return inertia.render('viewer', {
+      streamer: getPeer(request.param('id')),
+    })
   })
-})
+  .as('streams')

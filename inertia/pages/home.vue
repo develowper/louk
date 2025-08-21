@@ -6,7 +6,7 @@ import Scaffold from '~/layouts/Scaffold.vue'
 import icon from '~/images/logo.png'
 import { route } from '@izzyjs/route/client'
 const socket = useSocket()
-const streamers = ref<any[]>([])
+const streamers = ref<any[]>({})
 const socketinit = () => {
   //
 
@@ -22,7 +22,8 @@ const socketinit = () => {
   })
 
   socket.on('streamer-added', (data) => {
-    console.log('streamer-added', data)
+    console.log('streamer-added', data.id)
+    if (data?.id) streamers.value[data.id] = data
   })
   socket.on('streamer-removed', (data) => {
     console.log('streamer-removed', data)
@@ -65,7 +66,7 @@ onBeforeUnmount(() => {
       <div class="flex flex-col isolate mt-10 max-w-screen-xl mx-auto px-16 xl:px-8 gap-8">
         <Link
           :href="route('streamer')"
-          class="px-12 py-3 font-semibold text-white rounded-lg gradient-primary hover-gradient-primary hover:brightness-110 transition duration-300 ease-in-out cursor-pointer transform hover:scale-105"
+          class="px-12 text-center py-3 font-semibold text-white rounded-lg gradient-primary hover-gradient-primary hover:brightness-110 transition duration-300 ease-in-out cursor-pointer transform hover:scale-105"
         >
           {{ __('stream') }}
         </Link>
@@ -73,12 +74,12 @@ onBeforeUnmount(() => {
         <div class="text-center border-b border-b-gray-300">{{ __('streamers') }}</div>
         <div class="flex flex-col">
           <Link
-            :key="streamer.id || idx"
-            v-for="(streamer, idx) in streamers"
-            :href="route('streamer', { id: streamer.id })"
-            class="px-12 py-3 font-semibold text-primary rounded-lg hover:brightness-110 transition duration-300 ease-in-out cursor-pointer transform hover:scale-105"
+            :key="streamers[id].id || idx"
+            v-for="(id, idx) in Object.keys(streamers)"
+            :href="route('streams', { id: streamers[id].id })"
+            class="px-12 bg-primary-500 text-white py-3 font-semibold rounded-lg hover:brightness-110 transition duration-300 ease-in-out cursor-pointer transform hover:scale-105"
           >
-            {{ __('streamer') }}
+            <div class="animate-pulse">{{ streamers[id].id }}</div>
           </Link>
         </div>
       </div>

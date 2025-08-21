@@ -20,7 +20,9 @@ export async function useMediasoup() {
     audioProducer?: msClient.types.Producer | null
     localStream?: MediaStream | null
     currentTrack?: MediaStreamTrack | null
-    selectedCamera: { deviceId?: string; facingMode?: 'user' | 'environment' }
+    selectedCamera: any
+    consumerTransport: msClient.types.Transport | null
+    consumers: msClient.types.Consumer[] | []
   }
   let msHelper: MsHelper
   const socket = useSocket()
@@ -29,6 +31,8 @@ export async function useMediasoup() {
     localStream: null,
     currentTrack: null,
     selectedCamera: {},
+    consumerTransport: null,
+    consumers: [],
     async init() {
       this.device = new msClient.Device()
       console.log('init mediasoup')
@@ -178,6 +182,67 @@ export async function useMediasoup() {
       this.localStream.getVideoTracks().forEach((t) => t.stop())
       this.localStream.removeTrack(this.localStream.getVideoTracks()[0])
       this.localStream.addTrack(newTrack)
+    },
+    async createRecvTransport() {
+      if (!this.device) {
+        await this.init()
+      }
+
+      const transportData = await socket.request('createWebRtcTransport', {
+        direction: 'receive',
+      })
+
+      this.consumerTransport = this.device!.createRecvTransport({
+        id: transportData.id,
+        iceParameters: transportData.iceParameters,
+        iceCandidates: transportData.iceCandidates,
+        dtlsParameters: transportData.dtlsParameters,
+      })
+
+      this.consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+        try {
+          await socket.request('connectTransport', {
+            transportId: this.consumerTransport!.id,
+            dtlsParameters,
+          })
+          callback()
+        } catch (err) {
+          errback(err)
+        }
+      })
+    },
+
+    async consumeStream(streamerId: string): Promise<MediaStream> {
+      if (!this.device) await this.init()
+      if (!consumerTransport) await this.createRecvTransport()
+
+      const stream = new MediaStream()
+
+      for (const kind of ['video', 'audio']) {
+        const params = await socket.request('consume', {
+          rtpCapabilities: this.device!.rtpCapabilities,
+          streamerId,
+          kind,
+          transportId: consumerTransport!.id,
+        })
+
+        if (!params) continue
+
+        const consumer = await consumerTransport!.consume(params)
+        consumers.push(consumer)
+        stream.addTrack(consumer.track)
+      }
+
+      return stream
+    },
+
+    async closeConsumer() {
+      consumers.forEach((c) => c.close())
+      consumers = []
+      if (consumerTransport) {
+        consumerTransport.close()
+        consumerTransport = null
+      }
     },
   }
 
