@@ -18,6 +18,7 @@ export async function useMediasoup() {
     audioProducer?: msClient.types.Producer
     localStream?: MediaStream | null
     currentTrack?: MediaStreamTrack | null
+    selectedCamera: { deviceId?: string; facingMode?: 'user' | 'environment' }
   }
   let msHelper: MsHelper
   const socket = useSocket()
@@ -25,6 +26,7 @@ export async function useMediasoup() {
   msHelper = {
     localStream: null,
     currentTrack: null,
+    selectedCamera: {},
     async init() {
       this.device = new msClient.Device()
       console.log('init mediasoup')
@@ -90,60 +92,33 @@ export async function useMediasoup() {
       )
     },
 
-    async getWebcamStream() {
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevice = devices.find(
-        (d) => d.kind === 'videoinput' && d.label.includes('HD Camera')
-      ) // adjust name
+    async startWebcam() {
+      if (!this.device || !this.sendTransport) await this.init()
 
-      return navigator.mediaDevices.getUserMedia({
-        video: { deviceId: videoDevice?.deviceId || undefined },
+      const constraints: MediaStreamConstraints = {
+        video: this.selectedCamera.deviceId
+          ? { deviceId: { exact: this.selectedCamera.deviceId } }
+          : this.selectedCamera.facingMode
+            ? { facingMode: this.selectedCamera.facingMode }
+            : true,
+        audio: true,
+      }
+
+      this.localStream = await navigator.mediaDevices.getUserMedia(constraints)
+
+      this.webcamProducer = await this.sendTransport!.produce({
+        track: this.localStream.getVideoTracks()[0],
+      })
+      this.audioProducer = await this.sendTransport!.produce({
+        track: this.localStream.getAudioTracks()[0],
       })
     },
 
-    async startWebcam() {
-      if (!this.device || !this.sendTransport) {
-        await this.init()
-      }
-
-      try {
-        // Must be called inside a user-gesture (button click)
-        this.localStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user' }, // front camera on mobile
-          audio: { echoCancellation: true },
-        })
-
-        // Attach to transport
-        const [videoTrack] = this.localStream.getVideoTracks()
-        const [audioTrack] = this.localStream.getAudioTracks()
-
-        if (videoTrack) {
-          this.webcamProducer = await this.sendTransport!.produce({ track: videoTrack })
-        }
-        if (audioTrack) {
-          this.audioProducer = await this.sendTransport!.produce({ track: audioTrack })
-        }
-
-        return this.localStream
-      } catch (err) {
-        console.error('Failed to getUserMedia', err)
-        throw err
-      }
-    },
-
     async stopWebcam() {
-      if (this.webcamProducer) {
-        await this.webcamProducer.close()
-        this.webcamProducer = undefined
-      }
-      if (this.audioProducer) {
-        await this.audioProducer.close()
-        this.audioProducer = undefined
-      }
-      if (this.localStream) {
-        this.localStream.getTracks().forEach((track) => track.stop())
-        this.localStream = undefined
-      }
+      this.localStream?.getTracks().forEach((t) => t.stop())
+      await this.webcamProducer?.close()
+      await this.audioProducer?.close()
+      this.localStream = undefined
     },
     async getCameras(): Promise<{ deviceId: string; label: string; facingMode?: string }[]> {
       const devices = await navigator.mediaDevices.enumerateDevices()
@@ -170,21 +145,29 @@ export async function useMediasoup() {
       )
       return this.localStream
     },
-    async switchCamera(cameraIdOrFacing: string): Promise<MediaStream> {
-      if (this.localStream) {
-        this.localStream.getTracks().forEach((t) => t.stop())
-      }
-
-      let constraints: MediaStreamConstraints
-
-      if (cameraIdOrFacing === 'user' || cameraIdOrFacing === 'environment') {
-        constraints = { video: { facingMode: cameraIdOrFacing }, audio: false }
+    async switchCamera(deviceIdOrFacing: string) {
+      if (deviceIdOrFacing === 'front') {
+        this.selectedCamera = { facingMode: 'user' }
+      } else if (deviceIdOrFacing === 'back') {
+        this.selectedCamera = { facingMode: 'environment' }
       } else {
-        constraints = { video: { deviceId: { exact: cameraIdOrFacing } }, audio: false }
+        this.selectedCamera = { deviceId: deviceIdOrFacing }
       }
 
-      this.localStream = await navigator.mediaDevices.getUserMedia(constraints)
-      return this.localStream
+      if (this.webcamProducer && this.localStream) {
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: this.selectedCamera.deviceId
+            ? { deviceId: { exact: this.selectedCamera.deviceId } }
+            : { facingMode: this.selectedCamera.facingMode },
+        })
+        const newTrack = newStream.getVideoTracks()[0]
+        await this.webcamProducer.replaceTrack({ track: newTrack })
+
+        // cleanup old video track
+        this.localStream.getVideoTracks().forEach((t) => t.stop())
+        this.localStream.removeTrack(this.localStream.getVideoTracks()[0])
+        this.localStream.addTrack(newTrack)
+      }
     },
     stopCamera() {
       if (this.localStream) {
