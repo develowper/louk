@@ -9,15 +9,15 @@ export async function useMediasoup() {
   // Create a device (use browser auto-detection).
   const device: msTypes.Device = new msClient.Device()
   interface MsHelper {
-    init: () => Promise<void>
-    startWebcam: () => Promise<void>
-    stopWebcam: () => Promise<void>
+    init: () => Promise<any>
+    startWebcam: () => Promise<any>
+    stopWebcam: () => Promise<any>
     device?: msClient.Device
     sendTransport?: msClient.types.Transport
     webcamProducer?: msClient.types.Producer
     audioProducer?: msClient.types.Producer
-    localStream?: MediaStream
-    currentTrack?: MediaStreamTrack
+    localStream?: MediaStream | null
+    currentTrack?: MediaStreamTrack | null
   }
   let msHelper: MsHelper
   const socket = useSocket()
