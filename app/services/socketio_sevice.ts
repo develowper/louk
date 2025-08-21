@@ -187,6 +187,7 @@ export default class SocketioService {
             console.log('consume viewerPeer', socket.id)
             console.log('viewerPeerConsumers', viewerPeer.consumers)
             consumersData = {
+              producerId: streamerPeer.videoProducer.id,
               id: videoConsumer.id,
               kind: videoConsumer.kind,
               rtpParameters: videoConsumer.rtpParameters,
@@ -209,6 +210,7 @@ export default class SocketioService {
             })
             viewerPeer.consumers.set(`${streamerId}-audio`, audioConsumer)
             consumersData = {
+              producerId: streamerPeer.audioProducer.id,
               id: audioConsumer.id,
               kind: audioConsumer.kind,
               rtpParameters: audioConsumer.rtpParameters,

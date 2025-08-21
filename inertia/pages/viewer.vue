@@ -4,7 +4,6 @@ import Scaffold from '~/layouts/Scaffold.vue'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useMediasoup } from '~/js/mediasoup'
 
-const props = defineProps<{ id: string }>()
 const streamer = usePage().props.streamer
 
 let device: any, msClient: any, msHelper: any, socket: any
@@ -16,7 +15,7 @@ onMounted(async () => {
   ;({ device, msClient, msHelper, socket } = ms)
 
   console.log('Joining viewer for streamer:', streamer.id)
-  remoteStream.value = await msClient.consumeStream(streamer.id)
+  remoteStream.value = await msHelper.consumeStream(streamer.id)
 
   if (videoEl.value && remoteStream.value) {
     videoEl.value.srcObject = remoteStream.value

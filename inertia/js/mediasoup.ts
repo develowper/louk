@@ -10,12 +10,12 @@ export async function useMediasoup() {
   const device: msTypes.Device = new msClient.Device()
   interface MsHelper {
     init: () => Promise<any>
-    switchCamera: (any) => Promise<void>
+    switchCamera: (camera) => Promise<void>
     startCamera: () => Promise<any>
     stopCamera: () => any
     getCameras: () => Promise<{ deviceId: string; label: string; facingMode?: string }[]>
-    createRecvTransport: () => any
-    consumeStream: (any) => any
+    createRecvTransport: () => Promise<any>
+    consumeStream: (streamerId) => Promise<any>
     closeConsumer: () => any
     device?: msClient.Device | null
     sendTransport?: msClient.types.Transport | null
@@ -200,6 +200,7 @@ export async function useMediasoup() {
         iceParameters: transportData.iceParameters,
         iceCandidates: transportData.iceCandidates,
         dtlsParameters: transportData.dtlsParameters,
+        sctpParameters: transportData.sctpParameters,
       })
 
       this.consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
@@ -228,6 +229,7 @@ export async function useMediasoup() {
           kind,
           transportId: this.consumerTransport!.id,
         })
+
 
         if (!params) continue
 
