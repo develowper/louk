@@ -17,11 +17,14 @@ export async function useMediasoup() {
     webcamProducer?: msClient.types.Producer
     audioProducer?: msClient.types.Producer
     localStream?: MediaStream
+    currentTrack?: MediaStreamTrack
   }
   let msHelper: MsHelper
   const socket = useSocket()
 
   msHelper = {
+    localStream: null,
+    currentTrack: null,
     async init() {
       this.device = new msClient.Device()
       console.log('init mediasoup')
@@ -140,6 +143,40 @@ export async function useMediasoup() {
       if (this.localStream) {
         this.localStream.getTracks().forEach((track) => track.stop())
         this.localStream = undefined
+      }
+    },
+    async getCameras(): Promise<{ deviceId: string; label: string }[]> {
+      // Important: must have called getUserMedia once for labels to be available
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      return devices
+        .filter((d) => d.kind === 'videoinput')
+        .map((d) => ({
+          deviceId: d.deviceId,
+          label: d.label || `Camera ${Math.random().toString(36).slice(2, 6)}`,
+        }))
+    },
+    async startCamera(deviceId?: string): Promise<MediaStream> {
+      if (this.currentTrack) {
+        this.currentTrack.stop()
+        this.currentTrack = null
+      }
+
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        audio: false,
+      })
+
+      this.currentTrack = this.localStream.getVideoTracks()[0]
+      return this.localStream
+    },
+    async switchCamera(deviceId: string): Promise<MediaStream> {
+      return this.startCamera(deviceId)
+    },
+    stopCamera() {
+      if (this.localStream) {
+        this.localStream.getTracks().forEach((track) => track.stop())
+        this.localStream = null
+        this.currentTrack = null
       }
     },
   }
