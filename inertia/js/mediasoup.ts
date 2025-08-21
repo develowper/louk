@@ -146,6 +146,7 @@ export async function useMediasoup() {
       return this.localStream
     },
     async switchCamera(deviceIdOrFacing: string) {
+      // Update selected camera always
       if (deviceIdOrFacing === 'front') {
         this.selectedCamera = { facingMode: 'user' }
       } else if (deviceIdOrFacing === 'back') {
@@ -154,16 +155,20 @@ export async function useMediasoup() {
         this.selectedCamera = { deviceId: deviceIdOrFacing }
       }
 
+      // If streaming, replace track
       if (this.webcamProducer && this.localStream) {
         const newStream = await navigator.mediaDevices.getUserMedia({
           video: this.selectedCamera.deviceId
             ? { deviceId: { exact: this.selectedCamera.deviceId } }
             : { facingMode: this.selectedCamera.facingMode },
         })
+
         const newTrack = newStream.getVideoTracks()[0]
+
+        // Replace track in mediasoup
         await this.webcamProducer.replaceTrack({ track: newTrack })
 
-        // cleanup old video track
+        // Replace track in local stream for <video>
         this.localStream.getVideoTracks().forEach((t) => t.stop())
         this.localStream.removeTrack(this.localStream.getVideoTracks()[0])
         this.localStream.addTrack(newTrack)

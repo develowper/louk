@@ -41,10 +41,11 @@ onMounted(async () => {
   cameras.value = await msHelper.getCameras()
   if (cameras.value.length) selectedCamera.value = cameras.value[0].deviceId
 })
-watch(selectedCamera, async (newId) => {
-  if (!newId) return
-  const stream = await msHelper.switchCamera(newId)
-  if (localVideo.value) localVideo.value.srcObject = stream
+watch(selectedCamera, async (newVal) => {
+  await msHelper.switchCamera(newVal)
+  if (localVideo.value) {
+    localVideo.value.srcObject = msHelper.localStream || null
+  }
 })
 onBeforeUnmount(() => {
   socketLeave()
