@@ -145,15 +145,24 @@ export async function useMediasoup() {
         this.localStream = undefined
       }
     },
-    async getCameras(): Promise<{ deviceId: string; label: string }[]> {
-      // Important: must have called getUserMedia once for labels to be available
+    async getCameras(): Promise<{ deviceId: string; label: string; facingMode?: string }[]> {
       const devices = await navigator.mediaDevices.enumerateDevices()
-      return devices
+      let cams = devices
         .filter((d) => d.kind === 'videoinput')
-        .map((d) => ({
+        .map((d, i) => ({
           deviceId: d.deviceId,
-          label: d.label || `Camera ${Math.random().toString(36).slice(2, 6)}`,
+          label: d.label || `Camera ${i + 1}`,
         }))
+
+      // If only one camera is detected, add fallback options for front/back
+      if (cams.length <= 1) {
+        cams = [
+          { deviceId: 'user', label: 'Front Camera', facingMode: 'user' },
+          { deviceId: 'environment', label: 'Back Camera', facingMode: 'environment' },
+        ]
+      }
+
+      return cams
     },
     async startCamera(deviceId?: string): Promise<MediaStream> {
       if (this.currentTrack) {
