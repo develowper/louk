@@ -10,7 +10,7 @@ let device: any, msClient: any, msHelper: any, socket: any
 
 const isStreaming = ref(false)
 const cameras = ref<{ deviceId?: string; facingMode?: string; label: string }[]>([])
-const selectedCamera = ref<string | null>(null)
+const selectedCamera = ref<any>(null)
 
 const socketLeave = () => {
   if (socket) {
@@ -29,7 +29,6 @@ const toggleStream = async () => {
   }
 }
 const onCameraChange = async (newCam) => {
-
   await msHelper.switchCamera(newCam)
   if (isStreaming.value && localVideo.value) {
     localVideo.value.srcObject = msHelper.localStream
@@ -47,7 +46,7 @@ onMounted(async () => {
   await msHelper.init()
   cameras.value = await msHelper.getCameras()
   console.log(cameras.value)
-  if (cameras.value.length) selectedCamera.value = cameras.value[0].deviceId
+  if (cameras.value.length) selectedCamera.value = cameras.value[0]
 })
 watch(selectedCamera, async (newCamera) => {
   if (!newCamera) return
