@@ -34,12 +34,10 @@ export async function useMediasoup() {
       console.log('init mediasoup')
       const routerRtpCapabilities = await socket.request('getRouterRtpCapabilities')
       await this.device.load({ routerRtpCapabilities })
-      console.log(routerRtpCapabilities)
       const transportData = await socket.request('createWebRtcTransport', {
         direction: 'send',
         sctpCapabilities: this.device.sctpCapabilities,
       })
-      console.log(transportData)
       this.sendTransport = this.device.createSendTransport({
         id: transportData.id,
         iceParameters: transportData.iceParameters,
@@ -158,8 +156,9 @@ export async function useMediasoup() {
       this.audioProducer = null
     },
 
-    // Switch camera (works even if not streaming)
     async switchCamera(deviceIdOrFacing: string) {
+      console.log('switchCamera')
+      console.log(deviceIdOrFacing)
       if (deviceIdOrFacing === 'front') {
         this.selectedCamera = { facingMode: 'user' }
       } else if (deviceIdOrFacing === 'back') {
@@ -167,7 +166,7 @@ export async function useMediasoup() {
       } else {
         this.selectedCamera = { deviceId: deviceIdOrFacing }
       }
-
+      console.log(this.selectedCamera)
       // If streaming, replace track
       if (this.webcamProducer && this.localStream) {
         const newStream = await navigator.mediaDevices.getUserMedia({
