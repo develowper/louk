@@ -10,6 +10,7 @@ export async function useMediasoup() {
   const device: msTypes.Device = new msClient.Device()
   interface MsHelper {
     init: () => Promise<any>
+    switchCamera: (deviceIdOrFacing: string) => Promise<void>
     startCamera: () => Promise<any>
     stopCamera: () => any
     getCameras: () => Promise<{ deviceId: string; label: string; facingMode?: string }[]>
@@ -92,38 +93,10 @@ export async function useMediasoup() {
         }
       )
     },
+    async getCameras(): Promise<{ deviceId: string; label: string; facingMode?: string }[]> {
+      // Request one stream first so labels become available
+      await navigator.mediaDevices.getUserMedia({ video: true, audio: false }).catch(() => {})
 
-    async startCamera() {
-      // Ensure device and transport are initialized
-      if (!this.device || !this.sendTransport) await this.init()
-
-      // Media constraints based on selected camera
-      const constraints: MediaStreamConstraints = {
-        video: this.selectedCamera.deviceId
-          ? { deviceId: { exact: this.selectedCamera.deviceId } }
-          : this.selectedCamera.facingMode
-            ? { facingMode: { exact: this.selectedCamera.facingMode } }
-            : true,
-        audio: true,
-      }
-
-      // Get user media
-      this.localStream = await navigator.mediaDevices.getUserMedia(constraints)
-
-      // If we have a transport, produce tracks for Mediasoup
-      if (this.sendTransport) {
-        this.webcamProducer = await this.sendTransport.produce({
-          track: this.localStream.getVideoTracks()[0],
-        })
-        this.audioProducer = await this.sendTransport.produce({
-          track: this.localStream.getAudioTracks()[0],
-        })
-      }
-
-      return this.localStream
-    },
-
-    async getCameras() {
       const devices = await navigator.mediaDevices.enumerateDevices()
       let cams = devices
         .filter((d) => d.kind === 'videoinput')
@@ -132,8 +105,11 @@ export async function useMediasoup() {
           label: d.label || `Camera ${i + 1}`,
         }))
 
-      // If only one camera is detected, add fallback options for front/back
-      if (cams.length <= 1) {
+      // Detect if running on mobile (rough heuristic)
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
+      // On mobile with only one detected cam, offer logical front/back
+      if (isMobile && cams.length <= 1) {
         cams = [
           { deviceId: 'user', label: 'Front Camera', facingMode: 'user' },
           { deviceId: 'environment', label: 'Back Camera', facingMode: 'environment' },
@@ -143,8 +119,47 @@ export async function useMediasoup() {
       return cams
     },
 
+    // Start streaming (video + audio)
+    async startCamera() {
+      if (!this.device || !this.sendTransport) await this.init()
+
+      const constraints: MediaStreamConstraints = { audio: true }
+
+      if (this.selectedCamera.deviceId) {
+        constraints.video = { deviceId: { exact: this.selectedCamera.deviceId } }
+      } else if (this.selectedCamera.facingMode) {
+        constraints.video = { facingMode: { exact: this.selectedCamera.facingMode } }
+      } else {
+        constraints.video = true // fallback
+      }
+
+      try {
+        this.localStream = await navigator.mediaDevices.getUserMedia(constraints)
+      } catch (err) {
+        console.warn('Failed to get camera with constraints, fallback to default', err)
+        this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      }
+
+      this.webcamProducer = await this.sendTransport!.produce({
+        track: this.localStream.getVideoTracks()[0],
+      })
+      this.audioProducer = await this.sendTransport!.produce({
+        track: this.localStream.getAudioTracks()[0],
+      })
+    },
+
+    // Stop streaming
+    async stopCamera() {
+      this.localStream?.getTracks().forEach((t) => t.stop())
+      await this.webcamProducer?.close()
+      await this.audioProducer?.close()
+      this.localStream = null
+      this.webcamProducer = null
+      this.audioProducer = null
+    },
+
+    // Switch camera (works even if not streaming)
     async switchCamera(deviceIdOrFacing: string) {
-      // Update selected camera
       if (deviceIdOrFacing === 'front') {
         this.selectedCamera = { facingMode: 'user' }
       } else if (deviceIdOrFacing === 'back') {
@@ -153,38 +168,22 @@ export async function useMediasoup() {
         this.selectedCamera = { deviceId: deviceIdOrFacing }
       }
 
-      // Prepare constraints
-      const constraints: MediaStreamConstraints = {
-        video: this.selectedCamera.deviceId
-          ? { deviceId: { exact: this.selectedCamera.deviceId } }
-          : this.selectedCamera.facingMode
-            ? { facingMode: { exact: this.selectedCamera.facingMode } }
-            : true,
-        audio: false,
-      }
-
-      // If streaming, replace track in mediasoup
+      // If streaming, replace track
       if (this.webcamProducer && this.localStream) {
-        const newStream = await navigator.mediaDevices.getUserMedia(constraints)
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: this.selectedCamera.deviceId
+            ? { deviceId: { exact: this.selectedCamera.deviceId } }
+            : { facingMode: { exact: this.selectedCamera.facingMode } },
+        })
+
         const newTrack = newStream.getVideoTracks()[0]
 
-        // Replace track in mediasoup
         await this.webcamProducer.replaceTrack({ track: newTrack })
 
-        // Stop old track and update localStream for <video>
-        const oldTrack = this.localStream.getVideoTracks()[0]
-        oldTrack.stop()
-        this.localStream.removeTrack(oldTrack)
+        // Replace track in localStream for video element
+        this.localStream.getVideoTracks().forEach((t) => t.stop())
+        this.localStream.removeTrack(this.localStream.getVideoTracks()[0])
         this.localStream.addTrack(newTrack)
-      } else {
-        // If not streaming, just update selectedCamera; startWebcam() will use it
-      }
-    },
-    stopCamera() {
-      if (this.localStream) {
-        this.localStream.getTracks().forEach((track) => track.stop())
-        this.localStream = null
-        this.currentTrack = null
       }
     },
   }
