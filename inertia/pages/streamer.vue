@@ -9,7 +9,7 @@ const localVideo = ref<HTMLVideoElement | null>(null)
 let device: any, msClient: any, msHelper: any, socket: any
 
 const isStreaming = ref(false)
-const cameras = ref<{ deviceId: string; label: string }[]>([])
+const cameras = ref<{ deviceId?: string; facingMode?: string; label: string }[]>([])
 const selectedCamera = ref<string | null>(null)
 
 const socketLeave = () => {
@@ -19,11 +19,11 @@ const socketLeave = () => {
 }
 const toggleStream = async () => {
   if (!isStreaming.value) {
-    await msHelper.startWebcam()
+    await msHelper.startCamera()
     if (localVideo.value) localVideo.value.srcObject = msHelper.localStream || null
     isStreaming.value = true
   } else {
-    await msHelper.stopWebcam()
+    await msHelper.stopCamera()
     if (localVideo.value) localVideo.value.srcObject = null
     isStreaming.value = false
   }
@@ -67,7 +67,7 @@ onBeforeUnmount(() => {
           class="w-full rounded-md border border-gray-300"
         ></video>
         <select v-model="selectedCamera" class="border border-gray-300 my-2 rounded p-2 w-full">
-          <option v-for="c in cameras" :key="c.deviceId" :value="c.deviceId">
+          <option v-for="c in cameras" :key="c.deviceId || c.facingMode" :value="c">
             {{ c.label }}
           </option>
         </select>
