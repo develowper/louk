@@ -58,7 +58,35 @@ export async function useMediasoup() {
         dtlsParameters: transportData.dtlsParameters,
       })
 
-      // Add your sendTransport listeners here
+      this.sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+        try {
+          await socket.request('connectTransport', {
+            transportId: this.sendTransport!.id,
+            dtlsParameters,
+          })
+          callback()
+        } catch (err) {
+          errback(err)
+        }
+      })
+      this.sendTransport.on('produce', async ({ kind, rtpParameters }, callback, errback) => {
+        try {
+          const { id } = await socket.request('produce', {
+            transportId: this.sendTransport!.id,
+            kind,
+            rtpParameters,
+          })
+          callback({ id })
+        } catch (err) {
+          errback(err)
+        }
+      })
+      this.sendTransport.on('connectionstatechange', (state) => {
+        console.log('sendTransport state:', state)
+        if (state === 'failed' || state === 'closed' || state === 'disconnected') {
+          // optional cleanup / retry logic
+        }
+      })
     },
 
     async initRecv() {
@@ -235,6 +263,7 @@ export async function useMediasoup() {
         const consumer = await this.consumerTransport!.consume(params)
         this.consumers.push(consumer)
         stream.addTrack(consumer.track)
+        console.log(`resume consume from producer ${streamerId}`)
         await socket.request('resumeConsumer', { producerId: streamerId, kind })
       }
 
