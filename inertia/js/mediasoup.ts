@@ -164,22 +164,27 @@ export async function useMediasoup() {
 
       return cams
     },
-    async startCamera(deviceId?: string): Promise<MediaStream> {
-      if (this.currentTrack) {
-        this.currentTrack.stop()
-        this.currentTrack = null
-      }
-
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        video: deviceId ? { deviceId: { exact: deviceId } } : true,
-        audio: false,
-      })
-
-      this.currentTrack = this.localStream.getVideoTracks()[0]
+    async startCamera(constraints?: MediaStreamConstraints): Promise<MediaStream> {
+      this.localStream = await navigator.mediaDevices.getUserMedia(
+        constraints || { video: true, audio: false }
+      )
       return this.localStream
     },
-    async switchCamera(deviceId: string): Promise<MediaStream> {
-      return this.startCamera(deviceId)
+    async switchCamera(cameraIdOrFacing: string): Promise<MediaStream> {
+      if (this.localStream) {
+        this.localStream.getTracks().forEach((t) => t.stop())
+      }
+
+      let constraints: MediaStreamConstraints
+
+      if (cameraIdOrFacing === 'user' || cameraIdOrFacing === 'environment') {
+        constraints = { video: { facingMode: cameraIdOrFacing }, audio: false }
+      } else {
+        constraints = { video: { deviceId: { exact: cameraIdOrFacing } }, audio: false }
+      }
+
+      this.localStream = await navigator.mediaDevices.getUserMedia(constraints)
+      return this.localStream
     },
     stopCamera() {
       if (this.localStream) {
