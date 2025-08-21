@@ -235,6 +235,7 @@ export async function useMediasoup() {
         const consumer = await this.consumerTransport!.consume(params)
         this.consumers.push(consumer)
         stream.addTrack(consumer.track)
+        await socket.request('resumeConsumer', { producerId: streamerId, kind })
       }
 
       return stream
