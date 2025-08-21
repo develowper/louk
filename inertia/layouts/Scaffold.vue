@@ -5,10 +5,12 @@ import favicon from '~/images/logo.png'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import { io } from 'socket.io-client'
 import { onBeforeUnmount, onMounted, provide } from 'vue'
-const socket = useSocket()
-onMounted(() => {})
+let socket
+onMounted(async () => {
+  // socket = await useSocket()
+})
 onBeforeUnmount(() => {
-  socket.disconnect()
+  // socket?.disconnect()
 })
 </script>
 

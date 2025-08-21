@@ -43,7 +43,7 @@ onMounted(async () => {
   const ms = await useMediasoup()
   ;({ device, msClient, msHelper, socket } = ms)
 
-  await msHelper.init()
+  await msHelper.initSend()
   cameras.value = await msHelper.getCameras()
   console.log(cameras.value)
   if (cameras.value.length) selectedCamera.value = cameras.value[0]

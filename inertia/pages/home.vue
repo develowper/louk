@@ -5,12 +5,12 @@ import { __, useSocket } from '~/js/composables'
 import Scaffold from '~/layouts/Scaffold.vue'
 import icon from '~/images/logo.png'
 import { route } from '@izzyjs/route/client'
-const socket = useSocket()
+
 const streamers = ref<Record<string, any>>({})
-
-const socketinit = () => {
+let socket
+const socketinit = async () => {
   //
-
+  socket = await useSocket()
   socket.on('connect', () => {
     console.log(`..... Client Connected To Socket:  ${socket.id}`)
     socket.emit('JoinRoom', { roomId: 1 })

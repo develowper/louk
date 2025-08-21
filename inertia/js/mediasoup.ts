@@ -2,6 +2,7 @@ import { log, useSocket } from '~/js/composables'
 
 import * as msClient from 'mediasoup-client'
 import * as msTypes from 'mediasoup-client/types'
+import { Socket } from 'socket.io-client'
 
 console.log('mediasoupClientVersion', `${msClient.version}`)
 
@@ -9,7 +10,8 @@ export async function useMediasoup() {
   // Create a device (use browser auto-detection).
   const device: msTypes.Device = new msClient.Device()
   interface MsHelper {
-    init: () => Promise<any>
+    initSend: () => Promise<any>
+    initRecv: () => Promise<any>
     switchCamera: (camera) => Promise<void>
     startCamera: () => Promise<any>
     stopCamera: () => any
@@ -28,7 +30,7 @@ export async function useMediasoup() {
     consumers: msClient.types.Consumer[] | []
   }
   let msHelper: MsHelper
-  const socket = useSocket()
+  let socket
 
   msHelper = {
     localStream: null,
@@ -36,15 +38,19 @@ export async function useMediasoup() {
     selectedCamera: {},
     consumerTransport: null,
     consumers: [],
-    async init() {
+
+    async initSend() {
+      socket = socket ?? (await useSocket())
+      if (this.device) return
       this.device = new msClient.Device()
-      console.log('init mediasoup')
       const routerRtpCapabilities = await socket.request('getRouterRtpCapabilities')
       await this.device.load({ routerRtpCapabilities })
+
       const transportData = await socket.request('createWebRtcTransport', {
         direction: 'send',
         sctpCapabilities: this.device.sctpCapabilities,
       })
+
       this.sendTransport = this.device.createSendTransport({
         id: transportData.id,
         iceParameters: transportData.iceParameters,
@@ -52,10 +58,35 @@ export async function useMediasoup() {
         dtlsParameters: transportData.dtlsParameters,
       })
 
-      this.sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+      // Add your sendTransport listeners here
+    },
+
+    async initRecv() {
+      console.log('initRecv')
+      console.log('!this.device', !this.device)
+
+      if (!this.device) {
+        this.device = new msClient.Device()
+        const routerRtpCapabilities = await socket.request('getRouterRtpCapabilities')
+        console.log('routerRtpCapabilities', routerRtpCapabilities)
+        await this.device.load({ routerRtpCapabilities })
+      }
+      console.log('consumerTransport', this.consumerTransport)
+      if (this.consumerTransport) return
+
+      const transportData = await socket.request('createWebRtcTransport', { direction: 'receive' })
+      this.consumerTransport = this.device.createRecvTransport({
+        id: transportData.id,
+        iceParameters: transportData.iceParameters,
+        iceCandidates: transportData.iceCandidates,
+        dtlsParameters: transportData.dtlsParameters,
+        sctpParameters: transportData.sctpParameters,
+      })
+
+      this.consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
         try {
-          await socket.emit('transport-connect', {
-            transportId: this.sendTransport!.id,
+          await socket.request('connectTransport', {
+            transportId: this.consumerTransport!.id,
             dtlsParameters,
           })
           callback()
@@ -63,40 +94,6 @@ export async function useMediasoup() {
           errback(err)
         }
       })
-
-      this.sendTransport.on('produce', async ({ kind, rtpParameters }, callback, errback) => {
-        try {
-          const { id } = await socket.request('produce', {
-            transportId: this.sendTransport!.id,
-            kind,
-            rtpParameters,
-          })
-          callback({ id })
-        } catch (err) {
-          errback(err)
-        }
-      })
-      this.sendTransport.on(
-        'producedata',
-        async ({ sctpStreamParameters, label, protocol, appData }, callback, errback) => {
-          // Here we must communicate our local parameters to our remote transport.
-          try {
-            const { id } = await socket.request('produceData', {
-              transportId: this.sendTransport.id,
-              sctpStreamParameters,
-              label,
-              protocol,
-              appData,
-            })
-
-            // Done in the server, pass the response to our transport.
-            callback({ id })
-          } catch (error) {
-            // Something was wrong in server side.
-            errback(error)
-          }
-        }
-      )
     },
     async getCameras(): Promise<{ deviceId: string; label: string; facingMode?: string }[]> {
       // Request one stream first so labels become available
@@ -126,7 +123,7 @@ export async function useMediasoup() {
 
     // Start streaming (video + audio)
     async startCamera() {
-      if (!this.device || !this.sendTransport) await this.init()
+      if (!this.device || !this.sendTransport) await this.initSend()
 
       const constraints: MediaStreamConstraints = { audio: true }
 
@@ -187,6 +184,8 @@ export async function useMediasoup() {
       this.localStream.addTrack(newTrack)
     },
     async createRecvTransport() {
+      console.log('createRecvTransport')
+      console.log('!device', !this.device)
       if (!this.device) {
         await this.init()
       }
@@ -217,8 +216,10 @@ export async function useMediasoup() {
     },
 
     async consumeStream(streamerId: string): Promise<MediaStream> {
-      if (!this.device) await this.init()
-      if (!this.consumerTransport) await this.createRecvTransport()
+      socket = await useSocket()
+
+      if (!this.device) await this.initRecv()
+      if (!this.consumerTransport) await this.initRecv()
 
       const stream = new MediaStream()
 
@@ -231,7 +232,6 @@ export async function useMediasoup() {
         })
 
         if (!params) continue
-        console.log(params)
         const consumer = await this.consumerTransport!.consume(params)
         this.consumers.push(consumer)
         stream.addTrack(consumer.track)

@@ -5,7 +5,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useMediasoup } from '~/js/mediasoup'
 
 const streamer = usePage().props.streamer
-
+const isMuted = ref(true)
 let device: any, msClient: any, msHelper: any, socket: any
 const videoEl = ref<HTMLVideoElement | null>(null)
 const remoteStream = ref<MediaStream | null>(null)
@@ -16,12 +16,22 @@ onMounted(async () => {
 
   console.log('Joining viewer for streamer:', streamer.id)
   remoteStream.value = await msHelper.consumeStream(streamer.id)
-
-  if (videoEl.value && remoteStream.value) {
+  if (videoEl.value) {
+    console.log('playing')
     videoEl.value.srcObject = remoteStream.value
-    await videoEl.value.play().catch(console.error)
+    videoEl.value.muted = true
+
+    await videoEl.value.play().catch((err) => {
+      console.warn('Video play failed:', err)
+    })
   }
 })
+function unmute() {
+  if (videoEl.value) {
+    videoEl.value.muted = false
+    isMuted.value = false
+  }
+}
 
 onBeforeUnmount(() => {
   msHelper.closeConsumer()
@@ -39,8 +49,9 @@ onBeforeUnmount(() => {
         autoplay
         playsinline
         controls
-        class="w-full max-w-2xl rounded shadow"
+        class="w-full m-2 max-w-2xl rounded shadow"
       />
+      <button v-if="isMuted" @click="unmute">Unmute</button>
     </div>
   </Scaffold>
 </template>
