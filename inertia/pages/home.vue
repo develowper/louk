@@ -6,7 +6,8 @@ import Scaffold from '~/layouts/Scaffold.vue'
 import icon from '~/images/logo.png'
 import { route } from '@izzyjs/route/client'
 const socket = useSocket()
-const streamers = ref<any[]>({})
+const streamers = ref<Record<string, any>>({})
+
 const socketinit = () => {
   //
 
@@ -22,11 +23,17 @@ const socketinit = () => {
   })
 
   socket.on('streamer-added', (data) => {
-    console.log('streamer-added', data.id)
     if (data?.id) streamers.value[data.id] = data
+    console.log(data)
+    console.log('streamer-added')
+    console.log(Object.values(streamers.value))
+    for (let i of Object.values(streamers.value)) console.log(i.id)
   })
   socket.on('streamer-removed', (data) => {
     console.log('streamer-removed', data)
+    if (data?.id && streamers.value[data.id]) {
+      delete streamers.value[data.id] // remove from object
+    }
   })
 }
 
@@ -74,12 +81,12 @@ onBeforeUnmount(() => {
         <div class="text-center border-b border-b-gray-300">{{ __('streamers') }}</div>
         <div class="flex flex-col">
           <Link
-            :key="streamers[id].id || idx"
-            v-for="(id, idx) in Object.keys(streamers)"
-            :href="route('streams', { id: streamers[id].id })"
+            v-for="(s, idx) in streamers"
+            :key="s.id || idx"
+            :href="route('streams', { params: { id: s.id } })"
             class="px-12 bg-primary-500 text-white py-3 font-semibold rounded-lg hover:brightness-110 transition duration-300 ease-in-out cursor-pointer transform hover:scale-105"
           >
-            <div class="animate-pulse">{{ streamers[id].id }}</div>
+            <div class="animate-pulse">{{ s.id }}</div>
           </Link>
         </div>
       </div>

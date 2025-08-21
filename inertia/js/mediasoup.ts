@@ -14,6 +14,9 @@ export async function useMediasoup() {
     startCamera: () => Promise<any>
     stopCamera: () => any
     getCameras: () => Promise<{ deviceId: string; label: string; facingMode?: string }[]>
+    createRecvTransport: () => any
+    consumeStream: (any) => any
+    closeConsumer: () => any
     device?: msClient.Device | null
     sendTransport?: msClient.types.Transport | null
     webcamProducer?: msClient.types.Producer | null
@@ -214,7 +217,7 @@ export async function useMediasoup() {
 
     async consumeStream(streamerId: string): Promise<MediaStream> {
       if (!this.device) await this.init()
-      if (!consumerTransport) await this.createRecvTransport()
+      if (!this.consumerTransport) await this.createRecvTransport()
 
       const stream = new MediaStream()
 
@@ -223,13 +226,13 @@ export async function useMediasoup() {
           rtpCapabilities: this.device!.rtpCapabilities,
           streamerId,
           kind,
-          transportId: consumerTransport!.id,
+          transportId: this.consumerTransport!.id,
         })
 
         if (!params) continue
 
-        const consumer = await consumerTransport!.consume(params)
-        consumers.push(consumer)
+        const consumer = await this.consumerTransport!.consume(params)
+        this.consumers.push(consumer)
         stream.addTrack(consumer.track)
       }
 
@@ -237,11 +240,11 @@ export async function useMediasoup() {
     },
 
     async closeConsumer() {
-      consumers.forEach((c) => c.close())
-      consumers = []
-      if (consumerTransport) {
-        consumerTransport.close()
-        consumerTransport = null
+      this.consumers.forEach((c) => c.close())
+      this.consumers = []
+      if (this.consumerTransport) {
+        this.consumerTransport.close()
+        this.consumerTransport = null
       }
     },
   }
