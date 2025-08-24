@@ -91,7 +91,6 @@ export async function useMediasoup() {
 
     async initRecv() {
       console.log('initRecv')
-      console.log('!this.device', !this.device)
 
       if (!this.device) {
         this.device = new msClient.Device()
