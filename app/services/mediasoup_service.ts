@@ -72,6 +72,7 @@ export const mediaCodecs: any = [
     },
   },
 ]
+
 export async function initMediasoup() {
   worker = await createWorker({
     rtcMinPort: 40000,
