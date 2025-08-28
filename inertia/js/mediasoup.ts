@@ -3,6 +3,7 @@ import { log, useSocket } from '~/js/composables'
 import * as msClient from 'mediasoup-client'
 import * as msTypes from 'mediasoup-client/types'
 import { Socket } from 'socket.io-client'
+import { usePage } from '@inertiajs/vue3'
 
 console.log('mediasoupClientVersion', `${msClient.version}`)
 
@@ -61,11 +62,16 @@ export async function useMediasoup() {
         iceCandidates: transportData.iceCandidates,
         dtlsParameters: transportData.dtlsParameters,
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
+          {
+            urls: 'turn:195.214.235.75:3478',
+            username: 'admin',
+            credential: usePage().props.PSWD,
+          },
+          // { urls: 'stun:stun.l.google.com:19302' },
+          // { urls: 'stun:stun1.l.google.com:19302' },
+          // { urls: 'stun:stun2.l.google.com:19302' },
+          // { urls: 'stun:stun3.l.google.com:19302' },
+          // { urls: 'stun:stun4.l.google.com:19302' },
         ],
       })
       this.sendTransport.on('connectionstatechange', (state) => {

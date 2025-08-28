@@ -14,6 +14,7 @@ const inertiaConfig = defineConfig({
   sharedData: {
     language: (ctx) => getLangFile(ctx),
     socket_url: env.get('SOCKET_URL'),
+    PSWD: env.get('PSWD'),
     // user: (ctx) => ctx.inertia.always(() => ctx.auth.user),
   },
 
