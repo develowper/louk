@@ -95,20 +95,24 @@ export async function useMediasoup() {
         }
       })
 
-      this.sendTransport.on('produce', async ({ kind, rtpParameters }, callback, errback) => {
-        console.log(`[CLIENT] Sending produce request, kind: ${kind}`, rtpParameters)
+      this.sendTransport.on(
+        'produce',
+        async ({ kind, rtpParameters, appData }, callback, errback) => {
+          console.log(`[CLIENT] Sending produce request, kind: ${kind}`, rtpParameters)
 
-        try {
-          const { id, video_producer_id, audio_producer_id } = await socket.request('produce', {
-            transportId: this.sendTransport!.id,
-            kind,
-            rtpParameters,
-          })
-          callback({ id })
-        } catch (err) {
-          errback(err)
+          try {
+            const { id, video_producer_id, audio_producer_id } = await socket.request('produce', {
+              transportId: this.sendTransport!.id,
+              kind,
+              rtpParameters,
+              appData,
+            })
+            callback({ id })
+          } catch (err) {
+            errback(err)
+          }
         }
-      })
+      )
     },
 
     async initRecv() {
