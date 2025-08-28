@@ -60,6 +60,13 @@ export async function useMediasoup() {
         iceParameters: transportData.iceParameters,
         iceCandidates: transportData.iceCandidates,
         dtlsParameters: transportData.dtlsParameters,
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
+        ],
       })
       this.sendTransport.on('connectionstatechange', (state) => {
         console.log('sendTransport state:', state)
@@ -101,15 +108,7 @@ export async function useMediasoup() {
       console.log('initRecv')
 
       if (!this.device) {
-        this.device = new msClient.Device({
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' },
-          ],
-        })
+        this.device = new msClient.Device({})
         const routerRtpCapabilities = await socket.request('getRouterRtpCapabilities')
         console.log('routerRtpCapabilities', routerRtpCapabilities)
         await this.device.load({ routerRtpCapabilities })
