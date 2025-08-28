@@ -21,6 +21,7 @@ const toggleStream = async () => {
   if (!isStreaming.value) {
     await msHelper.startCamera()
     if (localVideo.value) localVideo.value.srcObject = msHelper.localStream || null
+    console.log('play button', !!localVideo.value, localVideo.value.srcObject)
     isStreaming.value = true
   } else {
     await msHelper.stopCamera()
@@ -45,7 +46,7 @@ onMounted(async () => {
 
   await msHelper.initSend()
   cameras.value = await msHelper.getCameras()
-  console.log(cameras.value)
+
   if (cameras.value.length) selectedCamera.value = cameras.value[0]
 })
 watch(selectedCamera, async (newCamera) => {

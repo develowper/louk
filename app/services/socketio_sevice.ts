@@ -84,7 +84,7 @@ export default class SocketioService {
       // Handle producer creation
       socket.on('produce', async ({ kind, rtpParameters = {}, sdp, type }, callback) => {
         // console.log('produce', kind, rtpParameters, sdp, type)
-        console.log('----------produce-------------')
+        console.log(`----------produce ${kind}-------------`)
         const peer = getPeer(socket.id)
         if (!peer.sendTransport) {
           console.warn(`Peer ${socket.id} not found`)
@@ -94,17 +94,16 @@ export default class SocketioService {
         const transport = peer.sendTransport
 
         rtpParameters.codecs = mapCodecsToRouter(rtpParameters.codecs)
-        console.log('rtpParameters', rtpParameters)
         // Before calling produce:
         // const { videoParams, audioParams } = filterSupportedCodecs(rtpParameters)
-        console.log(`produce ${kind}`, rtpParameters)
+        console.log(`produce ${kind}`, rtpParameters.codecs)
         const producer = await transport.produce({
           kind: kind,
           rtpParameters: rtpParameters,
         })
 
         // const producer = await transport.produce({ kind, rtpParameters })
-        console.log(`======${kind} producer ${socket.id} start stream`, producer)
+        console.log(`======${kind} producer for socket ${socket.id} start|  producer_id:`, producer.id)
 
         // Save both producers in the peer
         if (kind == 'video') peer.videoProducer = producer

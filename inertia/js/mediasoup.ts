@@ -28,6 +28,8 @@ export async function useMediasoup() {
     selectedCamera: any
     consumerTransport: msClient.types.Transport | null
     consumers: msClient.types.Consumer[] | []
+    sendLogTimer: any
+    recvLogTimer: any
   }
   let msHelper: MsHelper
   let socket
@@ -37,6 +39,8 @@ export async function useMediasoup() {
     currentTrack: null,
     selectedCamera: {},
     consumerTransport: null,
+    sendLogTimer: null,
+    recvLogTimer: null,
     consumers: [],
 
     async initSend() {
@@ -57,21 +61,31 @@ export async function useMediasoup() {
         iceCandidates: transportData.iceCandidates,
         dtlsParameters: transportData.dtlsParameters,
       })
-
+      this.sendTransport.on('connectionstatechange', (state) => {
+        console.log('sendTransport state:', state)
+        if (state === 'failed' || state === 'closed' || state === 'disconnected') {
+          // optional cleanup / retry logic
+        }
+      })
       this.sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+        console.log("sendTransport.on('connect'")
         try {
-          await socket.request('connectTransport', {
+          const connectRes = await socket.request('connectTransport', {
             transportId: this.sendTransport!.id,
             dtlsParameters,
           })
+          console.log('connect res', connectRes)
           callback()
         } catch (err) {
           errback(err)
         }
       })
+
       this.sendTransport.on('produce', async ({ kind, rtpParameters }, callback, errback) => {
+        console.log(`[CLIENT] Sending produce request, kind: ${kind}`, rtpParameters)
+
         try {
-          const { id } = await socket.request('produce', {
+          const { id, video_producer_id, audio_producer_id } = await socket.request('produce', {
             transportId: this.sendTransport!.id,
             kind,
             rtpParameters,
@@ -81,19 +95,17 @@ export async function useMediasoup() {
           errback(err)
         }
       })
-      this.sendTransport.on('connectionstatechange', (state) => {
-        console.log('sendTransport state:', state)
-        if (state === 'failed' || state === 'closed' || state === 'disconnected') {
-          // optional cleanup / retry logic
-        }
-      })
     },
 
     async initRecv() {
       console.log('initRecv')
 
       if (!this.device) {
-        this.device = new msClient.Device()
+        this.device = new msClient.Device({
+          // iceServers: [
+          //   { urls: 'stun:stun.l.google.com:19302' }, // free STUN)
+          // ],
+        })
         const routerRtpCapabilities = await socket.request('getRouterRtpCapabilities')
         console.log('routerRtpCapabilities', routerRtpCapabilities)
         await this.device.load({ routerRtpCapabilities })
@@ -112,10 +124,11 @@ export async function useMediasoup() {
 
       this.consumerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
         try {
-          await socket.request('connectTransport', {
+          const connectRes = await socket.request('connectTransport', {
             transportId: this.consumerTransport!.id,
             dtlsParameters,
           })
+          console.log("consumerTransport.on('connect'", connectRes)
           callback()
         } catch (err) {
           errback(err)
@@ -144,7 +157,7 @@ export async function useMediasoup() {
           { deviceId: 'environment', label: 'Back Camera', facingMode: 'environment' },
         ]
       }
-
+      console.log('cams', cams)
       return cams
     },
 
@@ -164,10 +177,15 @@ export async function useMediasoup() {
 
       try {
         this.localStream = await navigator.mediaDevices.getUserMedia(constraints)
+        console.log('localStream', this.localStream)
+        console.log('localStreamtracks', this.localStream.getVideoTracks())
       } catch (err) {
         console.warn('Failed to get camera with constraints, fallback to default', err)
         this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       }
+      this.sendTransport.on('connectionstatechange', (state) => {
+        console.log('Send transport state:', state)
+      })
 
       this.webcamProducer = await this.sendTransport!.produce({
         track: this.localStream.getVideoTracks()[0],
@@ -175,10 +193,47 @@ export async function useMediasoup() {
       this.audioProducer = await this.sendTransport!.produce({
         track: this.localStream.getAudioTracks()[0],
       })
+
+      console.log(`[CLIENT] Producing VIDEO track, Producer ID: ${this.webcamProducer.id}`)
+
+      console.log(`[CLIENT] Producing AUDIO track, Producer ID: ${this.audioProducer.id}`)
+      // Optional: log track events
+      this.webcamProducer.on('trackended', () => {
+        console.warn('[CLIENT] Video track ended')
+      })
+      this.audioProducer.on('trackended', () => {
+        console.warn('[CLIENT] Audio track ended')
+      })
+
+      this.webcamProducer.on('transportclose', () => {
+        console.warn('[CLIENT] Video transport closed')
+      })
+      this.audioProducer.on('transportclose', () => {
+        console.warn('[CLIENT] Audio transport closed')
+      })
+      let lastVideoBytes = 0
+      let lastAudioBytes = 0
+      this.sendLogTimer = setInterval(async () => {
+        if (this.webcamProducer) {
+          const videoStats = await this.webcamProducer.getStats()
+          videoStats.forEach((stat) => {
+            if (stat.type === 'outbound-rtp') {
+              const bytesSent = stat.bytesSent
+              const packetsSent = stat.packetsSent
+              const deltaBytes = bytesSent - lastVideoBytes
+              console.log(
+                `[VIDEO] packets: ${packetsSent}, bytes sent this interval: ${deltaBytes}`
+              )
+              lastVideoBytes = bytesSent
+            }
+          })
+        }
+      }, 5000)
     },
 
     // Stop streaming
     async stopCamera() {
+      clearInterval(this.sendLogTimer)
       this.localStream?.getTracks().forEach((t) => t.stop())
       await this.webcamProducer?.close()
       await this.audioProducer?.close()
@@ -189,7 +244,7 @@ export async function useMediasoup() {
 
     async switchCamera(camera: { deviceId?: string; label: string; facingMode?: string }) {
       this.selectedCamera = camera
-
+      console.log('switch camera, change stream?', !(!this.webcamProducer || !this.localStream))
       // If not streaming, nothing else to do
       if (!this.webcamProducer || !this.localStream) return
 
@@ -203,18 +258,18 @@ export async function useMediasoup() {
       const newTrack = newStream.getVideoTracks()[0]
 
       // Replace track in mediasoup
-      await this.webcamProducer.replaceTrack({ track: newTrack })
+      await this.webcamProducer?.replaceTrack({ track: newTrack })
 
       // Replace track in local stream for <video>
-      this.localStream.getVideoTracks().forEach((t) => t.stop())
-      this.localStream.removeTrack(this.localStream.getVideoTracks()[0])
-      this.localStream.addTrack(newTrack)
+      this.localStream?.getVideoTracks().forEach((t) => t.stop())
+      this.localStream?.removeTrack(this.localStream.getVideoTracks()[0])
+      this.localStream?.addTrack(newTrack)
     },
     async createRecvTransport() {
       console.log('createRecvTransport')
       console.log('!device', !this.device)
       if (!this.device) {
-        await this.init()
+        await this.initRecv()
       }
 
       const transportData = await socket.request('createWebRtcTransport', {
@@ -264,6 +319,26 @@ export async function useMediasoup() {
         stream.addTrack(consumer.track)
         console.log(`resume consume from producer ${streamerId}`)
         await socket.request('resumeConsumer', { producerId: streamerId, kind })
+
+        let lastVideoBytes = 0
+        let lastAudioBytes = 0
+
+        this.recvLogTimer = setInterval(async () => {
+          if (consumer) {
+            const stats = await consumer.getStats()
+            stats.forEach((stat) => {
+              if (stat.type === 'inbound-rtp') {
+                const bytesReceived = stat.bytesReceived
+                const packetsReceived = stat.packetsReceived
+                const deltaBytes = bytesReceived - lastVideoBytes
+                console.log(
+                  `[CONSUMER][VIDEO] packets: ${packetsReceived}, bytes received this interval: ${deltaBytes}`
+                )
+                lastVideoBytes = bytesReceived
+              }
+            })
+          }
+        }, 5000)
       }
 
       return stream
