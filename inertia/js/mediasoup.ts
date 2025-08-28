@@ -63,9 +63,10 @@ export async function useMediasoup() {
         dtlsParameters: transportData.dtlsParameters,
         iceServers: [
           {
-            urls: 'turn:195.214.235.75:3478?transport=tcp',
+            // urls: 'turn:195.214.235.75:3478?transport=tcp',
+            urls: 'turns:195.214.235.75:5349',
             username: 'admin',
-            credential: usePage().props.PSWD,
+            credential: usePage().props.PSWD ?? '',
           },
           // { urls: 'stun:stun.l.google.com:19302' },
           // { urls: 'stun:stun1.l.google.com:19302' },
