@@ -65,7 +65,7 @@ export async function useMediasoup() {
           {
             // urls: 'turn:195.214.235.75:3478?transport=tcp',
             urls: 'turns:195.214.235.75:5349',
-            username: 'admin',
+            username: 'turnserver',
             credential: usePage().props.PSWD ?? '',
           },
           // { urls: 'stun:stun.l.google.com:19302' },
