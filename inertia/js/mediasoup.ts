@@ -63,7 +63,7 @@ export async function useMediasoup() {
         dtlsParameters: transportData.dtlsParameters,
         iceServers: [
           {
-            urls: 'turn:195.214.235.75:3478',
+            urls: 'turn:195.214.235.75:3478?transport=tcp',
             username: 'admin',
             credential: usePage().props.PSWD,
           },
