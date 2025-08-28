@@ -192,8 +192,11 @@ export async function useMediasoup() {
         console.warn('Failed to get camera with constraints, fallback to default', err)
         this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       }
-      this.sendTransport.on('connectionstatechange', (state) => {
+      this.sendTransport?.on('connectionstatechange', (state) => {
         console.log('Send transport state:', state)
+      })
+      this.sendTransport?.on('icecandidateerror', (e) => {
+        console.log('ICE connection error:', e)
       })
 
       this.webcamProducer = await this.sendTransport!.produce({
