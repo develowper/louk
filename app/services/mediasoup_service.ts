@@ -103,7 +103,7 @@ export async function initMediasoup() {
 }
 export async function createWebRtcTransport(appData = {}) {
   const transport = await router.createWebRtcTransport({
-    listenIps: [{ ip: '0.0.0.0', announcedIp: env.get('DOMAIN') }], // Replace with your server's public IP if needed
+    listenIps: [{ ip: '0.0.0.0', announcedIp: env.get('HOST') }], // Replace with your server's public IP if needed
     enableUdp: true,
     enableTcp: true,
     preferUdp: true,
