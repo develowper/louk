@@ -62,12 +62,12 @@ export async function useMediasoup() {
         iceCandidates: transportData.iceCandidates,
         dtlsParameters: transportData.dtlsParameters,
         iceServers: [
-          {
-            // urls: 'turn:195.214.235.75:3478?transport=tcp',
-            urls: 'turns:195.214.235.75:5349',
-            username: 'turnserver',
-            credential: usePage().props.PSWD ?? '',
-          },
+          // {
+          //   // urls: 'turn:195.214.235.75:3478?transport=tcp',
+          //   urls: 'turns:195.214.235.75:5349',
+          //   username: 'turnserver',
+          //   credential: usePage().props.PSWD ?? '',
+          // },
           // { urls: 'stun:stun.l.google.com:19302' },
           // { urls: 'stun:stun1.l.google.com:19302' },
           // { urls: 'stun:stun2.l.google.com:19302' },

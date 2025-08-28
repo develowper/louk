@@ -86,7 +86,9 @@ export async function initMediasoup() {
     rtcMinPort: 40000,
     rtcMaxPort: 49999,
   })
-
+  worker.on('died', (error) => {
+    console.warn('mediasoup worker died', error)
+  })
   router = await worker.createRouter({
     mediaCodecs: mediaCodecs,
   })
@@ -122,7 +124,14 @@ export async function createWebRtcTransport(appData = {}) {
     },
     appData: appData,
   })
-
+  transport.on('dtlsstatechange', (dtlsState) => {
+    if (dtlsState == 'closed') {
+      transport.close()
+    }
+  })
+  transport.on('close', () => {
+    console.log('transport closed')
+  })
   transports.push(transport)
   return transport
 }
