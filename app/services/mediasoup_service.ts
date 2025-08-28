@@ -135,12 +135,12 @@ export async function createWebRtcServer() {
     listenInfos: [
       {
         protocol: 'udp',
-        ip: '9.9.9.9',
+        ip: env.get('DOMAIN'),
         port: 20000,
       },
       {
         protocol: 'tcp',
-        ip: '9.9.9.9',
+        ip: env.get('DOMAIN'),
         port: 20000,
       },
     ],
