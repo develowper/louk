@@ -102,9 +102,13 @@ export async function useMediasoup() {
 
       if (!this.device) {
         this.device = new msClient.Device({
-          // iceServers: [
-          //   { urls: 'stun:stun.l.google.com:19302' }, // free STUN)
-          // ],
+          iceServers = [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+          ],
         })
         const routerRtpCapabilities = await socket.request('getRouterRtpCapabilities')
         console.log('routerRtpCapabilities', routerRtpCapabilities)
