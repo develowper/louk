@@ -103,7 +103,10 @@ export default class SocketioService {
         })
 
         // const producer = await transport.produce({ kind, rtpParameters })
-        console.log(`======${kind} producer for socket ${socket.id} start|  producer_id:`, producer.id)
+        console.log(
+          `======${kind} producer for socket ${socket.id} start|  producer_id:`,
+          producer.id
+        )
 
         // Save both producers in the peer
         if (kind == 'video') peer.videoProducer = producer
@@ -156,15 +159,10 @@ export default class SocketioService {
 
         try {
           let consumersData = {}
-          console.log(`----------consume streamer ${streamerId}-------------`)
           console.log(
-            kind == 'video',
-            streamerPeer.videoProducer,
-            router.canConsume({
-              producerId: streamerPeer?.videoProducer?.id,
-              rtpCapabilities,
-            })
+            `----------consume ${kind} streamer ${streamerId} producerId ${streamerPeer.videoProducer?.id}-------------`
           )
+
           // Consume video if available
           if (
             kind == 'video' &&
@@ -177,14 +175,17 @@ export default class SocketioService {
             const videoConsumer = await viewerPeer.receiveTransport.consume({
               producerId: streamerPeer.videoProducer.id,
               rtpCapabilities,
-              paused: false,
+              paused: true,
             })
 
             console.log('streamerPeer', streamerId)
             console.log('streamerPeerVideoProducerId', streamerPeer.videoProducer.id)
             viewerPeer.consumers.set(`${streamerId}-video`, videoConsumer)
             console.log('consume viewerPeer', socket.id)
-            console.log('viewerPeerConsumers', viewerPeer.consumers)
+            console.log(
+              'viewerPeerConsumer for this streamer',
+              viewerPeer.consumers.get(`${streamerId}-video`)
+            )
             consumersData = {
               producerId: streamerPeer.videoProducer.id,
               id: videoConsumer.id,
@@ -205,7 +206,7 @@ export default class SocketioService {
             const audioConsumer = await viewerPeer.receiveTransport.consume({
               producerId: streamerPeer.audioProducer.id,
               rtpCapabilities,
-              paused: false,
+              paused: true,
             })
             viewerPeer.consumers.set(`${streamerId}-audio`, audioConsumer)
             consumersData = {

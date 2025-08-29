@@ -114,14 +114,14 @@ export async function createWebRtcTransport(appData = {}) {
   console.log('announcedIp', env.get('DOMAIN'))
   const transport = await router.createWebRtcTransport({
     listenIps: [{ ip: '0.0.0.0', announcedIp: env.get('DOMAIN') }], // Replace with your server's public IP if needed
-    enableUdp: true,
+    // enableUdp: true,
     enableTcp: true,
-    preferUdp: true,
-    enableSctp: true,
-    numSctpStreams: {
-      OS: 1024,
-      MIS: 1024,
-    },
+    // preferUdp: true,
+    // enableSctp: true,
+    // numSctpStreams: {
+    //   OS: 1024,
+    //   MIS: 1024,
+    // },
     appData: appData,
   })
   transport.on('dtlsstatechange', (dtlsState) => {
