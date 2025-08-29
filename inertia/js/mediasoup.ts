@@ -62,6 +62,11 @@ export async function useMediasoup() {
         iceCandidates: transportData.iceCandidates,
         dtlsParameters: transportData.dtlsParameters,
         iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
           {
             // urls: 'turn:195.214.235.75:3478?transport=tcp',
             urls: 'turns:195.214.235.75:5349',
@@ -73,11 +78,6 @@ export async function useMediasoup() {
             username: 'turnserver',
             credential: usePage().props.PSWD ?? '',
           },
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
         ],
       })
       this.sendTransport.on('connectionstatechange', (state) => {
