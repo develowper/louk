@@ -160,9 +160,6 @@ export default class SocketioService {
 
         try {
           let consumersData = {}
-          console.log(
-            `----------consume ${kind} streamer ${streamerId} producerId ${streamerPeer.videoProducer?.id}-------------`
-          )
 
           // Consume video if available
           if (
@@ -178,14 +175,16 @@ export default class SocketioService {
               rtpCapabilities,
               paused: true,
             })
-
+            console.log(
+              `----------consume ${kind} streamer ${streamerId} producerId ${streamerPeer.videoProducer?.id}-------------`
+            )
             console.log('streamerPeer', streamerId)
             console.log('streamerPeerVideoProducerId', streamerPeer.videoProducer.id)
             viewerPeer.consumers.set(`${streamerId}-video`, videoConsumer)
             console.log('consume viewerPeer', socket.id)
             console.log(
-              'viewerPeerConsumer for this streamer',
-              viewerPeer.consumers.get(`${streamerId}-video`)
+              'viewerPeerConsumer is for producer',
+              viewerPeer.consumers.get(`${streamerId}-video`)?.producerId
             )
             consumersData = {
               producerId: streamerPeer.videoProducer.id,
@@ -209,6 +208,9 @@ export default class SocketioService {
               rtpCapabilities,
               paused: true,
             })
+            console.log(
+              `----------consume ${kind} streamer ${streamerId} producerId ${streamerPeer.videoProducer?.id}-------------`
+            )
             viewerPeer.consumers.set(`${streamerId}-audio`, audioConsumer)
             consumersData = {
               producerId: streamerPeer.audioProducer.id,
@@ -217,7 +219,7 @@ export default class SocketioService {
               rtpParameters: audioConsumer.rtpParameters,
             }
           }
-          console.log('send Consumer Data')
+          console.log('send Consumer Data', consumersData)
           callback(consumersData)
         } catch (error) {
           console.error('Error consuming stream:', error)
@@ -229,7 +231,7 @@ export default class SocketioService {
         const viewerPeer = getPeer(socket.id)
         console.log(`----------resumeConsumer streamer ${streamerId}-------------`)
         // const transport = viewerPeer?.receiveTransport
-        console.log('viewerPeer', viewerPeer)
+        console.log('viewerPeer', viewerPeer?.id)
         console.log('consumerId', `${streamerId}-${kind}`)
         const consumer = viewerPeer?.consumers?.get(`${streamerId}-${kind}`)
         console.log(`resume${kind}Consumer  ${consumer.id} for producer ${consumer.producerId}`)

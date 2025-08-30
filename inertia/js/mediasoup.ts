@@ -215,25 +215,25 @@ export async function useMediasoup() {
       this.webcamProducer = await this.sendTransport!.produce({
         track: this.localStream.getVideoTracks()[0],
       })
-      this.audioProducer = await this.sendTransport!.produce({
-        track: this.localStream.getAudioTracks()[0],
-      })
+      // this.audioProducer = await this.sendTransport!.produce({
+      //   track: this.localStream.getAudioTracks()[0],
+      // })
 
       console.log(`[CLIENT] Producing VIDEO track, Producer ID: ${this.webcamProducer.id}`)
 
-      console.log(`[CLIENT] Producing AUDIO track, Producer ID: ${this.audioProducer.id}`)
+      console.log(`[CLIENT] Producing AUDIO track, Producer ID: ${this.audioProducer?.id}`)
       // Optional: log track events
       this.webcamProducer.on('trackended', () => {
         console.warn('[CLIENT] Video track ended')
       })
-      this.audioProducer.on('trackended', () => {
+      this.audioProducer?.on('trackended', () => {
         console.warn('[CLIENT] Audio track ended')
       })
 
       this.webcamProducer.on('transportclose', () => {
         console.warn('[CLIENT] Video transport closed')
       })
-      this.audioProducer.on('transportclose', () => {
+      this.audioProducer?.on('transportclose', () => {
         console.warn('[CLIENT] Audio transport closed')
       })
       let lastVideoBytes = 0
@@ -330,7 +330,7 @@ export async function useMediasoup() {
 
       const stream = new MediaStream()
 
-      for (const kind of ['video', 'audio']) {
+      for (const kind of ['video' /* 'audio'*/]) {
         const params = await socket.request('consume', {
           rtpCapabilities: this.device!.rtpCapabilities,
           streamerId,
