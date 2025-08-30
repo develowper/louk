@@ -106,7 +106,7 @@ export async function useMediasoup() {
           console.log(`[CLIENT] Sending produce request, kind: ${kind}`, rtpParameters)
 
           try {
-            const { id, video_producer_id, audio_producer_id } = await socket.request('produce', {
+            const { id } = await socket.request('produce', {
               transportId: this.sendTransport!.id,
               kind,
               rtpParameters,
@@ -152,6 +152,9 @@ export async function useMediasoup() {
         } catch (err) {
           errback(err)
         }
+      })
+      this.consumerTransport.on('connectionstatechange', (s) => {
+        console.log('consumerTransport state:', s)
       })
     },
     async getCameras(): Promise<{ deviceId: string; label: string; facingMode?: string }[]> {
@@ -336,11 +339,16 @@ export async function useMediasoup() {
         })
 
         if (!params) continue
-        const consumer = await this.consumerTransport!.consume(params)
+        const consumer = await this.consumerTransport!.consume({
+          id: params.id,
+          producerId: params.producerId,
+          kind: params.kind,
+          rtpParameters: params.rtpParameters,
+        })
         this.consumers.push(consumer)
         stream.addTrack(consumer.track)
-        console.log(`resume consume from producer ${streamerId}`)
-        await socket.request('resumeConsumer', { producerId: streamerId, kind })
+        const res = await socket.request('resumeConsumer', { streamerId: streamerId, kind })
+        console.log(`resume consume from producer ${streamerId}`, res)
 
         let lastVideoBytes = 0
         let lastAudioBytes = 0

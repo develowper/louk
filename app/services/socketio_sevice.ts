@@ -133,9 +133,10 @@ export default class SocketioService {
         // })
 
         callback({
-          id: socket.id,
-          video_producer_id: peer.videoProducer?.id,
-          audio_producer_id: peer.audioProducer?.id,
+          id: producer.id,
+          // id: socket.id,
+          // video_producer_id: peer.videoProducer?.id,
+          // audio_producer_id: peer.audioProducer?.id,
         })
       })
 
@@ -223,15 +224,15 @@ export default class SocketioService {
           callback({ error: error.message })
         }
       })
-      socket.on('resumeConsumer', async ({ producerId, kind }, callback) => {
-        const streamerPeer = getPeer(producerId)
+      socket.on('resumeConsumer', async ({ streamerId, kind }, callback) => {
+        const streamerPeer = getPeer(streamerId)
         const viewerPeer = getPeer(socket.id)
-        console.log(`----------resumeConsumer streamer ${producerId}-------------`)
+        console.log(`----------resumeConsumer streamer ${streamerId}-------------`)
         // const transport = viewerPeer?.receiveTransport
         console.log('viewerPeer', viewerPeer)
-        console.log('consumerId', `${producerId}-${kind}`)
-        const consumer = viewerPeer?.consumers?.get(`${producerId}-${kind}`)
-        console.log('resumeConsumer', consumer)
+        console.log('consumerId', `${streamerId}-${kind}`)
+        const consumer = viewerPeer?.consumers?.get(`${streamerId}-${kind}`)
+        console.log(`resume${kind}Consumer  ${consumer.id} for producer ${consumer.producerId}`)
         consumer?.resume() // start receiving packets
         callback({ status: 'success' })
       })
