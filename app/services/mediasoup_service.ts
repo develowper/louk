@@ -114,9 +114,9 @@ export async function createWebRtcTransport(appData = {}) {
   console.log('announcedIp', env.get('DOMAIN'))
   const transport = await router.createWebRtcTransport({
     listenIps: [{ ip: '0.0.0.0', announcedIp: env.get('DOMAIN') }], // Replace with your server's public IP if needed
-    enableUdp: false,
+    enableUdp: true,
     enableTcp: true,
-    preferUdp: false,
+    preferUdp: true,
     enableSctp: true,
     numSctpStreams: {
       OS: 1024,
