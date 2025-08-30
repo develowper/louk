@@ -235,7 +235,7 @@ export default class SocketioService {
         console.log('consumerId', `${streamerId}-${kind}`)
         const consumer = viewerPeer?.consumers?.get(`${streamerId}-${kind}`)
         console.log(`resume${kind}Consumer  ${consumer.id} for producer ${consumer.producerId}`)
-        consumer?.resume() // start receiving packets
+        await consumer?.resume() // start receiving packets
         callback({ status: 'success' })
       })
       socket.on('stopProduce', async () => {
